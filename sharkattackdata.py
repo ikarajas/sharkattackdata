@@ -1,5 +1,5 @@
 import os
-import jinja2, webapp2, json, cgi, logging
+import jinja2, webapp2, json, cgi, logging, datetime
 
 from google.appengine.api import memcache
 
@@ -86,9 +86,54 @@ class CountryPage(BasePage):
             totalUnprovokedCount=len([y for y in attacks if not y.provoked]),
             totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal]))
 
+class PostCountry(webapp2.RequestHandler):
+    def post(self):
+        data = self.request.body
+        countries = json.loads(data)
+        #logging.info(attacks)
+        for countryrow in countries:
+            tostore = Country()
+            tostore.name = countryrow[0]
+            tostore.put()
+
+
+class PostSharkAttack(webapp2.RequestHandler):
+    def post(self):
+        data = self.request.body
+        attacks = json.loads(data)
+        #logging.info(attacks)
+        for attackrow in attacks:
+            tostore = SharkAttack()
+            dateStr = attackrow[0]
+            if dateStr == "":
+                dateValue = None
+            else:
+                dateValue = datetime.datetime.strptime(dateStr, '%Y-%m-%d').date()
+            tostore.date = dateValue
+            tostore.date_orig = attackrow[1]
+            tostore.country = attackrow[2]
+            tostore.area = attackrow[3]
+            tostore.location = attackrow[4]
+            tostore.activity = attackrow[5]
+            tostore.name = attackrow[6]
+            tostore.sex = attackrow[7]
+            tostore.age = attackrow[8]
+            tostore.injury = attackrow[9]
+            tostore.time = attackrow[10]
+            tostore.species = attackrow[11]
+            tostore.investigator_or_source = attackrow[12]
+            tostore.date_is_approximate = attackrow[13] == "True"
+            tostore.fatal = attackrow[14] == "True"
+            tostore.provoked = attackrow[15] == "True"
+            tostore.put()
+
+
+
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 application = webapp2.WSGIApplication([
     ('/', MainPage, "main"),
+    ('/post_country', PostCountry),
+    ('/post_sharkattack', PostSharkAttack),
     ('/country/([A-Za-z_]+)', CountryPage)
     ], debug=debug)
