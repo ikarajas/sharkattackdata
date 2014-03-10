@@ -14,5 +14,8 @@ libraries:
    version: latest
 
 handlers:
+- url: /serviceops/.*
+  script: sharkattackdata.application
+  login: admin
 - url: /.*
   script: sharkattackdata.application

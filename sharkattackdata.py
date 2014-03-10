@@ -1,10 +1,10 @@
 import os
 import jinja2, webapp2, json, cgi, logging, datetime
 
-from google.appengine.api import memcache
+from google.appengine.api import memcache, users
+from google.appengine.ext import ndb
 
 from models import SharkAttack, Country
-
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -86,54 +86,88 @@ class CountryPage(BasePage):
             totalUnprovokedCount=len([y for y in attacks if not y.provoked]),
             totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal]))
 
-class PostCountry(webapp2.RequestHandler):
+class JsonServiceHandler(webapp2.RequestHandler):
+    def post(self):
+        data = json.loads(self.request.body)
+        self.handle(data)
+
+class DeleteCountries(JsonServiceHandler):
+    def handle(self, data):
+        memcache.add("countries", None)
+        query = Country.query()
+        results = query.fetch(1000)
+
+        while results:
+            ndb.delete_multi([m.key for m in results])
+            results = query.fetch(1000)
+        
+class DeleteSharkAttacks(JsonServiceHandler):
+    def handle(self, data):
+        query = SharkAttack.query()
+        results = query.fetch(1000)
+
+        while results:
+            ndb.delete_multi([m.key for m in results])
+            results = query.fetch(1000)
+
+class PostCountries(webapp2.RequestHandler):
     def post(self):
         data = self.request.body
         countries = json.loads(data)
-        #logging.info(attacks)
         for countryrow in countries:
-            tostore = Country()
-            tostore.name = countryrow[0]
-            tostore.put()
+            toStore = Country()
+            toStore.name = countryrow[0]
+            toStore.put()
 
-
-class PostSharkAttack(webapp2.RequestHandler):
+class PostSharkAttacks(webapp2.RequestHandler):
     def post(self):
         data = self.request.body
         attacks = json.loads(data)
-        #logging.info(attacks)
         for attackrow in attacks:
-            tostore = SharkAttack()
+            toStore = SharkAttack()
             dateStr = attackrow[0]
             if dateStr == "":
                 dateValue = None
             else:
                 dateValue = datetime.datetime.strptime(dateStr, '%Y-%m-%d').date()
-            tostore.date = dateValue
-            tostore.date_orig = attackrow[1]
-            tostore.country = attackrow[2]
-            tostore.area = attackrow[3]
-            tostore.location = attackrow[4]
-            tostore.activity = attackrow[5]
-            tostore.name = attackrow[6]
-            tostore.sex = attackrow[7]
-            tostore.age = attackrow[8]
-            tostore.injury = attackrow[9]
-            tostore.time = attackrow[10]
-            tostore.species = attackrow[11]
-            tostore.investigator_or_source = attackrow[12]
-            tostore.date_is_approximate = attackrow[13] == "True"
-            tostore.fatal = attackrow[14] == "True"
-            tostore.provoked = attackrow[15] == "True"
-            tostore.put()
+            toStore.date = dateValue
+            toStore.date_orig = attackrow[1]
+            toStore.country = attackrow[2]
+            toStore.area = attackrow[3]
+            toStore.location = attackrow[4]
+            toStore.activity = attackrow[5]
+            toStore.name = attackrow[6]
+            toStore.sex = attackrow[7]
+            toStore.age = attackrow[8]
+            toStore.injury = attackrow[9]
+            toStore.time = attackrow[10]
+            toStore.species = attackrow[11]
+            toStore.investigator_or_source = attackrow[12]
+            toStore.date_is_approximate = attackrow[13] == "True"
+            toStore.fatal = attackrow[14] == "True"
+            toStore.provoked = attackrow[15] == "True"
+            toStore.put()
 
+class Authenticate(webapp2.RequestHandler):
+    def get(self):
+        user = users.get_current_user()
+        if user:
+            greeting = ('Welcome, %s! (<a href="%s">sign out</a>)' %
+                        (user.nickname(), users.create_logout_url('/')))
+        else:
+            greeting = ('<a href="%s">Sign in or register</a>.' %
+                        users.create_login_url('/'))
 
+        self.response.out.write('<html><body>%s</body></html>' % greeting)
 
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 application = webapp2.WSGIApplication([
     ('/', MainPage, "main"),
-    ('/post_country', PostCountry),
-    ('/post_sharkattack', PostSharkAttack),
-    ('/country/([A-Za-z_]+)', CountryPage)
+    ('/country/([A-Za-z_]+)', CountryPage),
+    ('/serviceops/post_countries', PostCountries),
+    ('/serviceops/post_sharkattacks', PostSharkAttacks),
+    ('/serviceops/delete_countries', DeleteCountries),
+    ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
+    ('/serviceops/authenticate', Authenticate)
     ], debug=debug)
