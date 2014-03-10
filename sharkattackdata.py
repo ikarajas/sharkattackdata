@@ -55,6 +55,7 @@ class BasePage(webapp2.RequestHandler):
 
     def doIt(self, **kwargs):
         template_values = {
+            "title": "Shark Attack Data",
             "subtemplate": "templates/basepage.html",
             "countries": sorted(self.helper.getCountries(), key=lambda c: c.name)
             }
@@ -78,6 +79,7 @@ class CountryPage(BasePage):
         attacks = [y for y in self.helper.getAttacksForCountry(countryName)]
         
         self.doIt(
+            title="Shark Attack Data: %s" % countryName,
             subtemplate="templates/country.html",
             country=countryName,
             attacks=attacks,
