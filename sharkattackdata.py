@@ -90,7 +90,7 @@ class Helper():
         for i in range(numParts):
             cacheKey = self.getCountryAttacksPartKey(displayCountry, i)
             logging.info("Writing to cache: %s" % cacheKey)
-            if not memcache.add(cacheKey, attacks[i:(i*self._attacksPerPart)]):
+            if not memcache.add(cacheKey, attacks[(i*self._attacksPerPart):((i+1)*self._attacksPerPart)]):
                 raise Exception("Unable to write country summary to memcache.")
             
         
