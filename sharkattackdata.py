@@ -71,7 +71,9 @@ class Helper():
         attacks = []
         numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
         for i in range(numParts):
-            theseAttacks = memcache.get(self.getCountryAttacksPartKey(displayCountry, i))
+            cacheKey = self.getCountryAttacksPartKey(displayCountry, i)
+            logging.info("Retrieving from cache: %s" % cacheKey)
+            theseAttacks = memcache.get(cacheKey)
             if theseAttacks is None:
                 return None
             attacks.extend(theseAttacks)
@@ -83,11 +85,12 @@ class Helper():
         fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
         summary = CountrySummary(displayCountry.name, len(attacks), fatalCount, unprovokedCount, fatalAndUnprovokedCount)
         if not memcache.add(self.getCountrySummaryKey(displayCountry), summary):
-            #raise Exception("Unable to write country summary to memcache.")
-            pass
+            raise Exception("Unable to write country summary to memcache.")
         numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
         for i in range(numParts):
-            if not memcache.add(self.getCountryAttacksPartKey(displayCountry, i), attacks[i:(i*self._attacksPerPart)]):
+            cacheKey = self.getCountryAttacksPartKey(displayCountry, i)
+            logging.info("Writing to cache: %s" % cacheKey)
+            if not memcache.add(cacheKey, attacks[i:(i*self._attacksPerPart)]):
                 raise Exception("Unable to write country summary to memcache.")
             
         
