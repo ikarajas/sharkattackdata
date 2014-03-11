@@ -1,4 +1,4 @@
-import os
+import os, math
 import jinja2, webapp2, json, cgi, logging, datetime
 
 from google.appengine.api import memcache, users
@@ -16,9 +16,17 @@ class DisplayCountry:
         self.name = str
         self.urlPart = str.replace(" ", "_")
 
+class CountrySummary:
+    def __init__(self, countryName, totalCount, fatalCount, provokedCount, fatalAndProvokedCount):
+        self._countryName = countryName
+        self._totalCount = totalCount
+        self._fatalCount = fatalCount
+        self._provokedCount = provokedCount
+        self._fatalAndProvokedCount = fatalAndProvokedCount
+
 class Helper():
     def __init__(self):
-        pass
+        self._attacksPerPart = 1000
 
     def br(self, response):
         response.write("<br />")
@@ -33,19 +41,56 @@ class Helper():
                 logging.error("Couldn't save countries to memcache.")
         return countries
 
-    def getAttacksForCountry(self, country):
-        if country is None:
-            country = ""
-        key = "attacks_%s" % country
-        attacks = memcache.get(key)
+    def getCountriesAsDict(self):
+        displayCountries = self.getCountries()
+        return dict([[y.name, y] for y in displayCountries])
+
+    def getAttacksForCountry(self, countryName):
+        displayCountry = self.getCountriesAsDict()[countryName]
+        if displayCountry is None:
+            raise ValueError("displayCountry cannot be None")
+        attacks = self.readAttacksForCountryFromCache(displayCountry)
         if attacks is None:
             query = SharkAttack.query(
-                SharkAttack.country == country,
+                SharkAttack.country == displayCountry.name,
                 ).order(SharkAttack.date)
             attacks = [y for y in query.iter()]
-            if not memcache.add(key, attacks):
-                logging.error("Couldn't save countries to memcache.")
+            self.writeAttacksForCountryToCache(displayCountry, attacks)
         return attacks
+
+    def getCountrySummaryKey(self, displayCountry):
+        return "attacks_%s_summary" % displayCountry.urlPart
+
+    def getCountryAttacksPartKey(self, displayCountry, part):
+        return "attacks_%s_part_%s" % (displayCountry.urlPart, part)
+
+    def readAttacksForCountryFromCache(self, displayCountry):
+        summary = memcache.get(self.getCountrySummaryKey(displayCountry))
+        if summary is None:
+            return None
+        attacks = []
+        numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
+        for i in range(numParts):
+            theseAttacks = memcache.get(self.getCountryAttacksPartKey(displayCountry, i))
+            if theseAttacks is None:
+                return None
+            attacks.extend(theseAttacks)
+        return attacks
+        
+    def writeAttacksForCountryToCache(self, displayCountry, attacks):
+        fatalCount = len([y for y in attacks if y.fatal])
+        unprovokedCount = len([y for y in attacks if not y.provoked])
+        fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
+        summary = CountrySummary(displayCountry.name, len(attacks), fatalCount, unprovokedCount, fatalAndUnprovokedCount)
+        if not memcache.add(self.getCountrySummaryKey(displayCountry), summary):
+            #raise Exception("Unable to write country summary to memcache.")
+            pass
+        numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
+        for i in range(numParts):
+            if not memcache.add(self.getCountryAttacksPartKey(displayCountry, i), attacks[i:(i*self._attacksPerPart)]):
+                raise Exception("Unable to write country summary to memcache.")
+            
+        
 
 
 class BasePage(webapp2.RequestHandler):

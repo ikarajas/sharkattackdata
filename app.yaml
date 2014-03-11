@@ -16,6 +16,7 @@ libraries:
 handlers:
 - url: /favicon.ico
   static_files: assets/images/favicon.ico
+  upload: assets/images/favicon.ico
 - url: /serviceops/.*
   script: sharkattackdata.application
   login: admin
