@@ -11,7 +11,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
-class DisplayCountry:
+class DisplayLocation:
     def __init__(self, str):
         self.name = str
         self.urlPart = str.replace(" ", "_")
@@ -31,11 +31,16 @@ class Helper():
     def br(self, response):
         response.write("<br />")
 
+    def uniqueify(self, seq):
+        seen = set()
+        seen_add = seen.add
+        return [ x for x in seq if x not in seen and not seen_add(x)]
+
     def getCountries(self):
         countries = memcache.get("countries")
         if countries is None:
             query = Country.query()
-            countries = [DisplayCountry(y.name) for y in query.iter()]
+            countries = [DisplayLocation(y.name) for y in query.iter()]
             logging.info(len(countries))
             if not memcache.add("countries", countries):
                 logging.error("Couldn't save countries to memcache.")
@@ -45,7 +50,7 @@ class Helper():
         displayCountries = self.getCountries()
         return dict([[y.name, y] for y in displayCountries])
 
-    def getAttacksForCountry(self, countryName):
+    def getAttacksForLocation(self, countryName, areaName=None):
         displayCountry = self.getCountriesAsDict()[countryName]
         if displayCountry is None:
             raise ValueError("displayCountry cannot be None")
@@ -56,6 +61,9 @@ class Helper():
                 ).order(SharkAttack.date)
             attacks = [y for y in query.iter()]
             self.writeAttacksForCountryToCache(displayCountry, attacks)
+
+        if areaName is not None:
+            attacks = [y for y in attacks if y.area == areaName]
         return attacks
 
     def getCountrySummaryKey(self, displayCountry):
@@ -101,40 +109,91 @@ class BasePage(webapp2.RequestHandler):
         self.initialize(request, response)
         self.helper = Helper()
 
-    def doIt(self, **kwargs):
+    def doIt(self, *args, **kwargs):
+        logging.info("In BasePage")
         template_values = {
             "title": "Shark Attack Data",
             "subtemplate": "templates/basepage.html",
             "countries": sorted(self.helper.getCountries(), key=lambda c: c.name)
             }
         
-        for key, value in kwargs.iteritems():
+        previousKwargs = args[0]
+        for key, value in (dict(previousKwargs.items() + kwargs.items())).iteritems():
             template_values[key] = value
 
+        #logging.info(template_values)
         template = JINJA_ENVIRONMENT.get_template('templates/main.html')
         self.response.write(template.render(template_values))
+
+class LocationData:
+    def __init__(self, countryName=None, areaName=None):
+        self.countryName = countryName.replace("_", " ")
+        self.areaName = None if areaName is None else areaName.replace("_", " ")
 
 class MainPage(BasePage):
     def get(self):
         self.doIt()
 
-class CountryPage(BasePage):
+class LocationPage(BasePage):
     def __init__(self, request, response):
-        super(CountryPage, self).__init__(request, response)
+        super(LocationPage, self).__init__(request, response)
 
-    def get(self, country):
-        countryName = country.replace("_", " ")
-        attacks = [y for y in self.helper.getAttacksForCountry(countryName)]
+    def doIt(self, locationData, **kwargs):
+        logging.info("In LocationPage")
+        attacks = [y for y in self.getAttacksForLocation(locationData)]
         
-        self.doIt(
-            title="Shark Attack Data: %s" % countryName,
-            subtemplate="templates/country.html",
-            country=countryName,
+        super(LocationPage, self).doIt(
+            kwargs,
             attacks=attacks,
             totalAttacksCount=len(attacks),
             totalFatalCount=len([y for y in attacks if y.fatal]),
             totalUnprovokedCount=len([y for y in attacks if not y.provoked]),
             totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal]))
+
+class CountryPage(LocationPage):
+    def __init__(self, request, response):
+        super(CountryPage, self).__init__(request, response)
+        self._attacks = None
+
+    def getAttacksForLocation(self, locationData):
+        if self._attacks is None:
+            self._attacks = [y for y in self.helper.getAttacksForLocation(locationData.countryName)]
+        return self._attacks
+
+    def getAreas(self, locationData):
+        areas = [DisplayLocation(y) for y in self.helper.uniqueify([y.area for y in self.getAttacksForLocation(locationData) if not y.area == ""])]
+        areas.sort(key=lambda a: a.name)
+        return areas
+
+    def get(self, countryName):
+        locationData = LocationData(countryName)
+        
+        self.doIt(locationData,
+                  title="Shark Attack Data: %s" % locationData.countryName,
+                  subtemplate="templates/country.html",
+                  country=DisplayLocation(locationData.countryName),
+                  areas = self.getAreas(locationData)
+                  )
+
+class AreaPage(LocationPage):
+    def __init__(self, request, response):
+        super(AreaPage, self).__init__(request, response)
+
+    def getAttacksForLocation(self, locationData):
+        attacks = [y for y in self.helper.getAttacksForLocation(locationData.countryName, areaName=locationData.areaName)]
+        return attacks
+
+    def get(self, countryName, areaName):
+        if areaName == "No_area_given":
+            areaName = ""
+        areaData = LocationData(countryName, areaName)
+        
+        self.doIt(areaData,
+            subtemplate="templates/area.html",
+            title="Shark Attack Data: %s, %s" % (areaData.areaName, areaData.countryName),
+            country=DisplayLocation(areaData.countryName),
+            area=DisplayLocation(areaData.areaName if not areaName == "" else "\"No area given\""),
+            )
 
 class JsonServiceHandler(webapp2.RequestHandler):
     def post(self):
@@ -215,6 +274,7 @@ debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 application = webapp2.WSGIApplication([
     ('/', MainPage, "main"),
     ('/country/([A-Za-z_]+)', CountryPage),
+    ('/country/([A-Za-z_]+)/area/([A-Za-z_]+)', AreaPage),
     ('/serviceops/post_countries', PostCountries),
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_countries', DeleteCountries),

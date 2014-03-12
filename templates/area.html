@@ -1,32 +1,23 @@
 {% autoescape true %}
 
 <p>
-  Displaying shark attacks that have occurred in {{ country.name }}.
+  Displaying shark attacks that have occurred in {{ area.name }}, {{ country.name }}.
   Total: {{ totalAttacksCount }}. Fatal: {{ totalFatalCount }}, Unprovoked: {{ totalUnprovokedCount }},
   Fatal and unprovoked: {{ totalFatalUnprovokedCount }}
 </p>
 
-<h3>Attacks by area</h3>
-<ul>
-  {% for area in areas %}
-  <li><a href="/country/{{ country.urlPart }}/area/{{ area.urlPart }}">{{ area.name }}</a></li>
-  {% endfor %}
-  <li><a href="/country/{{ country.urlPart }}/area/No_area_given">No area given</a></li>
-</ul>
 
-<h3>Attacks</h3>
+
 <table class="table table-striped">
   <tbody>
     <thead>
       <th>Date</th>
-      <th>Area</th>
       <th>Location</th>
       <th>Activity</th>
     </thead>
     {% for attack in attacks %}
     <tr>
       <td>{{ attack.date_userfriendly }}</td>
-      <td>{{ attack.area }}</td>
       <td>{{ attack.location }}</td>
       <td>{{ attack.activity }}</td>
     </tr>
