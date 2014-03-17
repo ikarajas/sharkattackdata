@@ -17,12 +17,21 @@ class DisplayLocation:
         self.urlPart = str.replace(" ", "_")
 
 class CountrySummary:
-    def __init__(self, countryName, totalCount, fatalCount, provokedCount, fatalAndProvokedCount):
-        self._countryName = countryName
-        self._totalCount = totalCount
-        self._fatalCount = fatalCount
-        self._provokedCount = provokedCount
-        self._fatalAndProvokedCount = fatalAndProvokedCount
+    def __init__(self, displayLocationForCountry, attacks):
+        self._totalCount = len(attacks)
+        # self._countryName = displayLocationForCountry.name
+        # self._fatalCount = len([y for y in attacks if y.fatal])
+        # self._unprovokedCount = len([y for y in attacks if not y.provoked])
+        # self._fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
+
+class LocationSummary:
+    def __init__(self, displayLocation, attacks):
+        self._totalCount = len(attacks)
+        self._countryName = displayLocation.name
+        self._fatalCount = len([y for y in attacks if y.fatal])
+        self._unprovokedCount = len([y for y in attacks if not y.provoked])
+        self._fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
+
 
 class Helper():
     def __init__(self):
@@ -41,7 +50,6 @@ class Helper():
         if countries is None:
             query = Country.query()
             countries = [DisplayLocation(y.name) for y in query.iter()]
-            logging.info(len(countries))
             if not memcache.add("countries", countries):
                 logging.error("Couldn't save countries to memcache.")
         return countries
@@ -88,10 +96,7 @@ class Helper():
         return attacks
         
     def writeAttacksForCountryToCache(self, displayCountry, attacks):
-        fatalCount = len([y for y in attacks if y.fatal])
-        unprovokedCount = len([y for y in attacks if not y.provoked])
-        fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
-        summary = CountrySummary(displayCountry.name, len(attacks), fatalCount, unprovokedCount, fatalAndUnprovokedCount)
+        summary = CountrySummary(displayCountry, attacks)
         if not memcache.add(self.getCountrySummaryKey(displayCountry), summary):
             raise Exception("Unable to write country summary to memcache.")
         numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
@@ -132,7 +137,7 @@ class LocationData:
 
 class MainPage(BasePage):
     def get(self):
-        self.doIt()
+        self.doIt({})
 
 class LocationPage(BasePage):
     def __init__(self, request, response):
@@ -148,7 +153,8 @@ class LocationPage(BasePage):
             totalAttacksCount=len(attacks),
             totalFatalCount=len([y for y in attacks if y.fatal]),
             totalUnprovokedCount=len([y for y in attacks if not y.provoked]),
-            totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal]))
+            totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal])
+            )
 
 class CountryPage(LocationPage):
     def __init__(self, request, response):
@@ -161,7 +167,8 @@ class CountryPage(LocationPage):
         return self._attacks
 
     def getAreas(self, locationData):
-        areas = [DisplayLocation(y) for y in self.helper.uniqueify([y.area for y in self.getAttacksForLocation(locationData) if not y.area == ""])]
+        areas = [DisplayLocation(y) for y in
+                 self.helper.uniqueify([y.area for y in self.getAttacksForLocation(locationData) if not y.area == ""])]
         areas.sort(key=lambda a: a.name)
         return areas
 
