@@ -18,6 +18,7 @@ class SharkAttack(ndb.Model):
     date_userfriendly = ndb.ComputedProperty(getUserFriendlyDate)
     country = ndb.StringProperty()
     area = ndb.StringProperty()
+    area_normalised = ndb.StringProperty()
     location = ndb.StringProperty()
     activity = ndb.StringProperty()
     name = ndb.StringProperty()
@@ -30,7 +31,7 @@ class SharkAttack(ndb.Model):
     date_is_approximate = ndb.BooleanProperty()
     fatal = ndb.BooleanProperty()
     provoked = ndb.BooleanProperty()
-
+    identifier = ndb.StringProperty(indexed=True)
 
 class Country(ndb.Model):
     name = ndb.StringProperty()

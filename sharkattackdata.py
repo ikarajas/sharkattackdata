@@ -5,6 +5,7 @@ from google.appengine.api import memcache, users
 from google.appengine.ext import ndb
 
 from models import SharkAttack, Country
+from utils import StringUtils
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -12,9 +13,15 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     autoescape=True)
 
 class DisplayLocation:
-    def __init__(self, str):
+    def __init__(self, str, urlFriendlyName=None):
         self.name = str
-        self.urlPart = str.replace(" ", "_")
+        if urlFriendlyName is not None:
+            self.urlPart = urlFriendlyName
+        else:
+            self.urlPart = str.replace(" ", "_").lower()
+
+    def __repr__(self):
+        return "DisplayLocation -- name: %s, urlPart: %s" % (self.name, self.urlPart)
 
 class CountrySummary:
     def __init__(self, displayLocationForCountry, attacks):
@@ -37,13 +44,10 @@ class Helper():
     def __init__(self):
         self._attacksPerPart = 1000
 
-    def br(self, response):
-        response.write("<br />")
-
     def uniqueify(self, seq):
         seen = set()
         seen_add = seen.add
-        return [ x for x in seq if x not in seen and not seen_add(x)]
+        return [x for x in seq if x not in seen and not seen_add(x)]
 
     def getCountries(self):
         countries = memcache.get("countries")
@@ -54,14 +58,24 @@ class Helper():
                 logging.error("Couldn't save countries to memcache.")
         return countries
 
+    def getNormalisedCountryName(self, countryName):
+        return StringUtils.normaliseName(countryName, toLower=True, spacesToUnderscore=True)
+
     def getCountriesAsDict(self):
         displayCountries = self.getCountries()
-        return dict([[y.name, y] for y in displayCountries])
+        return dict([[self.getNormalisedCountryName(y.name), y] for y in displayCountries])
 
-    def getAttacksForLocation(self, countryName, areaName=None):
-        displayCountry = self.getCountriesAsDict()[countryName]
-        if displayCountry is None:
+    def getDisplayLocationForCountryNameKey(self, countryNameKey):
+        countriesDict = self.getCountriesAsDict()
+        if not countriesDict.has_key(countryNameKey):
+            raise ValueError("No record for country: %s." % countryNameKey)
+        return countriesDict[countryNameKey]
+
+    def getAttacksForLocation(self, countryName, areaNormalised=None):
+        countryNameNormalised = self.getNormalisedCountryName(countryName)
+        if not self.getCountriesAsDict().has_key(countryNameNormalised):
             raise ValueError("displayCountry cannot be None")
+        displayCountry = self.getCountriesAsDict()[countryNameNormalised]
         attacks = self.readAttacksForCountryFromCache(displayCountry)
         if attacks is None:
             query = SharkAttack.query(
@@ -70,8 +84,8 @@ class Helper():
             attacks = [y for y in query.iter()]
             self.writeAttacksForCountryToCache(displayCountry, attacks)
 
-        if areaName is not None:
-            attacks = [y for y in attacks if y.area == areaName]
+        if areaNormalised is not None:
+            attacks = [y for y in attacks if y.area_normalised == areaNormalised]
         return attacks
 
     def getCountrySummaryKey(self, displayCountry):
@@ -115,7 +129,6 @@ class BasePage(webapp2.RequestHandler):
         self.helper = Helper()
 
     def doIt(self, *args, **kwargs):
-        logging.info("In BasePage")
         template_values = {
             "title": "Shark Attack Data",
             "subtemplate": "templates/basepage.html",
@@ -131,9 +144,13 @@ class BasePage(webapp2.RequestHandler):
         self.response.write(template.render(template_values))
 
 class LocationData:
-    def __init__(self, countryName=None, areaName=None):
+    def __init__(self, countryName=None, areaName=None, urlFriendlyAreaName=None):
         self.countryName = countryName.replace("_", " ")
         self.areaName = None if areaName is None else areaName.replace("_", " ")
+        self.urlFriendlyAreaName = urlFriendlyAreaName
+
+    def __repr__(self):
+        return "LocationData (countryName: %s, areaName: %s, urlFriendlyAreaName: %s)" % (self.countryName, self.areaName, self.urlFriendlyAreaName)
 
 class MainPage(BasePage):
     def get(self):
@@ -167,18 +184,20 @@ class CountryPage(LocationPage):
         return self._attacks
 
     def getAreas(self, locationData):
-        areas = [DisplayLocation(y) for y in
-                 self.helper.uniqueify([y.area for y in self.getAttacksForLocation(locationData) if not y.area == ""])]
+        areas = [DisplayLocation(y[0], urlFriendlyName=y[1]) for y in
+                 self.helper.uniqueify([(y.area, y.area_normalised) for y in self.getAttacksForLocation(locationData) if not y.area == ""])]
         areas.sort(key=lambda a: a.name)
         return areas
 
-    def get(self, countryName):
-        locationData = LocationData(countryName)
+    def get(self, countryNameKey):
+        countryDisplayLocation = self.helper.getDisplayLocationForCountryNameKey(countryNameKey)
+
+        locationData = LocationData(countryDisplayLocation.name)
         
         self.doIt(locationData,
                   title="Shark Attack Data: %s" % locationData.countryName,
                   subtemplate="templates/country.html",
-                  country=DisplayLocation(locationData.countryName),
+                  country=countryDisplayLocation,
                   areas = self.getAreas(locationData)
                   )
 
@@ -187,20 +206,30 @@ class AreaPage(LocationPage):
         super(AreaPage, self).__init__(request, response)
 
     def getAttacksForLocation(self, locationData):
-        attacks = [y for y in self.helper.getAttacksForLocation(locationData.countryName, areaName=locationData.areaName)]
+        print locationData
+        attacks = [y for y in self.helper.getAttacksForLocation(locationData.countryName, areaNormalised=locationData.urlFriendlyAreaName)]
         return attacks
 
-    def get(self, countryName, areaName):
-        if areaName == "No_area_given":
+    def get(self, countryNameKey, areaNameKey):
+        countryDisplayLocation = self.helper.getDisplayLocationForCountryNameKey(countryNameKey)
+
+        if areaNameKey == "No_area_given":
             areaName = ""
-        areaData = LocationData(countryName, areaName)
+        else:
+            #This causes the attacks cache to be hit just to obtain the area name. Improve...
+            tempLocationData = LocationData(countryDisplayLocation.name, areaNameKey, urlFriendlyAreaName=areaNameKey)
+            areaName = self.getAttacksForLocation(tempLocationData)[0].area
+
+        areaData = LocationData(countryDisplayLocation.name, areaName, urlFriendlyAreaName=areaNameKey)
         
+        logging.info(areaData)
+
         self.doIt(areaData,
             subtemplate="templates/area.html",
             title="Shark Attack Data: %s, %s" % (areaData.areaName, areaData.countryName),
             country=DisplayLocation(areaData.countryName),
-            area=DisplayLocation(areaData.areaName if not areaName == "" else "\"No area given\""),
-            )
+            area=DisplayLocation(areaData.areaName if not areaName == "" else "\"No area given\"",
+                                 areaName))
 
 class JsonServiceHandler(webapp2.RequestHandler):
     def post(self):
@@ -239,6 +268,7 @@ class PostSharkAttacks(webapp2.RequestHandler):
     def post(self):
         data = self.request.body
         attacks = json.loads(data)
+        toStoreList = []
         for attackrow in attacks:
             toStore = SharkAttack()
             dateStr = attackrow[0]
@@ -250,19 +280,22 @@ class PostSharkAttacks(webapp2.RequestHandler):
             toStore.date_orig = attackrow[1]
             toStore.country = attackrow[2]
             toStore.area = attackrow[3]
-            toStore.location = attackrow[4]
-            toStore.activity = attackrow[5]
-            toStore.name = attackrow[6]
-            toStore.sex = attackrow[7]
-            toStore.age = attackrow[8]
-            toStore.injury = attackrow[9]
-            toStore.time = attackrow[10]
-            toStore.species = attackrow[11]
-            toStore.investigator_or_source = attackrow[12]
-            toStore.date_is_approximate = attackrow[13] == "True"
-            toStore.fatal = attackrow[14] == "True"
-            toStore.provoked = attackrow[15] == "True"
-            toStore.put()
+            toStore.area_normalised = attackrow[4]
+            toStore.location = attackrow[5]
+            toStore.activity = attackrow[6]
+            toStore.name = attackrow[7]
+            toStore.sex = attackrow[8]
+            toStore.age = attackrow[9]
+            toStore.injury = attackrow[10]
+            toStore.time = attackrow[11]
+            toStore.species = attackrow[12]
+            toStore.investigator_or_source = attackrow[13]
+            toStore.date_is_approximate = attackrow[14] == "True"
+            toStore.fatal = attackrow[15] == "True"
+            toStore.provoked = attackrow[16] == "True"
+            toStore.identifier = attackrow[17]
+            toStoreList.append(toStore)
+        ndb.put_multi(toStoreList)
 
 class Authenticate(webapp2.RequestHandler):
     def get(self):
@@ -278,10 +311,11 @@ class Authenticate(webapp2.RequestHandler):
 
 
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
+
 application = webapp2.WSGIApplication([
     ('/', MainPage, "main"),
-    ('/country/([A-Za-z_]+)', CountryPage),
-    ('/country/([A-Za-z_]+)/area/([A-Za-z_]+)', AreaPage),
+    ('/place/([A-Za-z_]+)', CountryPage),
+    ('/place/([A-Za-z_]+)/([A-Za-z0-9_]+)', AreaPage),
     ('/serviceops/post_countries', PostCountries),
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_countries', DeleteCountries),

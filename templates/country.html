@@ -9,9 +9,9 @@
 <h3>Attacks by area</h3>
 <ul>
   {% for area in areas %}
-  <li><a href="/country/{{ country.urlPart }}/area/{{ area.urlPart }}">{{ area.name }}</a></li>
+  <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
   {% endfor %}
-  <li><a href="/country/{{ country.urlPart }}/area/No_area_given">No area given</a></li>
+  <li><a href="/place/{{ country.urlPart }}/No_area_given">No area given</a></li>
 </ul>
 
 <h3>Attacks</h3>
