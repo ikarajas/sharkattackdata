@@ -17,6 +17,7 @@ class SharkAttack(ndb.Model):
     def getNormalisedCountryName(sa):
         return StringUtils.normaliseName(sa.country, toLower=True, spacesToUnderscore=True, dashesToUnderscore=True)
 
+    gsaf_case_number = ndb.StringProperty()
     date = ndb.DateProperty()
     date_orig = ndb.StringProperty()
     date_userfriendly = ndb.ComputedProperty(getUserFriendlyDate)
@@ -37,6 +38,9 @@ class SharkAttack(ndb.Model):
     fatal = ndb.BooleanProperty()
     provoked = ndb.BooleanProperty()
     identifier = ndb.StringProperty(indexed=True)
+
+    unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Yes" if not sa.provoked else "No")
+    fatalUserFriendly = ndb.ComputedProperty(lambda sa: "Yes" if sa.fatal else "No")
 
 class Country(ndb.Model):
     name = ndb.StringProperty()

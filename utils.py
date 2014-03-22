@@ -2,17 +2,21 @@ import re, unittest
 
 class StringUtils:
     @staticmethod
-    def normaliseName(name, toLower=False, spacesToUnderscore=False, dashesToUnderscore=False):
+    def normaliseName(name, toLower=False, spacesToUnderscore=False, spacesToDash=False, dashesToUnderscore=False):
+        if spacesToUnderscore and spacesToDash:
+            raise ValueError("Kwargs: spacesToUnderscore and spacesToDash cannot both be true.")
         name = name.strip()
         if toLower:
             name = name.lower()
         whitespaceRe = re.compile(r"\s+")
         name = whitespaceRe.sub(" ", name)
-        if spacesToUnderscore:
-            name = name.replace(" ", "_")
         if dashesToUnderscore:
             name = name.replace("-", "_")
-        alnumRe = re.compile(r"([^a-zA-Z0-9_ ]+)")
+        if spacesToUnderscore:
+            name = name.replace(" ", "_")
+        if spacesToDash:
+            name = name.replace(" ", "-")
+        alnumRe = re.compile(r"([^a-zA-Z0-9_\- ]+)")
         name = alnumRe.sub("", name)
         return name
 
@@ -45,7 +49,13 @@ class StringUtilsTest(unittest.TestCase):
         self.assertEqual(StringUtils.normaliseName("i-am-a-monkey", dashesToUnderscore=True), "i_am_a_monkey")
 
     def testDashesToUnderscoreFalse(self):
-        self.assertEqual(StringUtils.normaliseName("i-am-a-monkey"), "iamamonkey")
+        self.assertEqual(StringUtils.normaliseName("i-am-a-monkey"), "i-am-a-monkey")
+
+    def testSpacesToDashTrue(self):
+        self.assertEqual(StringUtils.normaliseName("i am a monkey", spacesToDash=True), "i-am-a-monkey")
+
+    def testSpacesToDashFalse(self):
+        self.assertEqual(StringUtils.normaliseName("i am a monkey"), "i am a monkey")
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,14 +11,13 @@
   {% for area in areas %}
   <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
   {% endfor %}
-  <li><a href="/place/{{ country.urlPart }}/No_area_given">No area given</a></li>
 </ul>
 
 <h3>Attacks</h3>
-<table class="table table-striped">
+<table class="table table-striped incident-list">
   <tbody>
     <thead>
-      <th>Date</th>
+      <th class="date">Date</th>
       <th>Area</th>
       <th>Location</th>
       <th>Activity</th>

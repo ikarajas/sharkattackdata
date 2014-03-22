@@ -7,6 +7,10 @@
     <thead>
     </thead>
     <tr>
+      <th>GSAF Case #</th>
+      <td>{{ attack.gsaf_case_number }}</td>
+    </tr>
+    <tr>
       <th>Date</th>
       <td>{{ attack.date_userfriendly }}</td>
     </tr>
@@ -56,11 +60,11 @@
     </tr>
     <tr>
       <th>Fatal?</th>
-      <td>{{ attack.fatal }}</td>
+      <td>{{ attack.fatalUserFriendly }}</td>
     </tr>
     <tr>
-      <th>Provoked?</th>
-      <td>{{ attack.provoked }}</td>
+      <th>Unprovoked?</th>
+      <td>{{ attack.unprovokedUserFriendly }}</td>
     </tr>
   </tbody>
 </table>

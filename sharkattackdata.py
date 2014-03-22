@@ -232,12 +232,9 @@ class AreaPage(LocationPage):
     def get(self, countryNameKey, areaNameKey):
         countryDisplayLocation = self.helper.getDisplayLocationForCountryNameKey(countryNameKey)
 
-        if areaNameKey == "No_area_given":
-            areaName = ""
-        else:
-            #This causes the attacks cache to be hit just to obtain the area name. Improve...
-            tempLocationData = LocationData(countryDisplayLocation.name, areaNameKey, urlFriendlyAreaName=areaNameKey)
-            areaName = self.getAttacksForLocation(tempLocationData)[0].area
+        #This causes the attacks cache to be hit just to obtain the area name. Improve...
+        tempLocationData = LocationData(countryDisplayLocation.name, areaNameKey, urlFriendlyAreaName=areaNameKey)
+        areaName = self.getAttacksForLocation(tempLocationData)[0].area
 
         areaData = LocationData(countryDisplayLocation.name, areaName, urlFriendlyAreaName=areaNameKey)
         
@@ -309,6 +306,7 @@ class PostSharkAttacks(webapp2.RequestHandler):
             toStore.date_is_approximate = attackrow[14] == "True"
             toStore.fatal = attackrow[15] == "True"
             toStore.provoked = attackrow[16] == "True"
+            toStore.gsaf_case_number = attackrow[18]
             toStoreList.append(toStore)
         ndb.put_multi(toStoreList)
 
