@@ -1,3 +1,4 @@
+from utils import StringUtils
 from google.appengine.ext import ndb
 
 MonthsDict = {
@@ -13,10 +14,14 @@ class SharkAttack(ndb.Model):
             year, month, day = sa.date.isoformat().split("T")[0].split("-")
             return "%s %s %s" % (day, MonthsDict[int(month.replace("0", ""))], year)
 
+    def getNormalisedCountryName(sa):
+        return StringUtils.normaliseName(sa.country, toLower=True, spacesToUnderscore=True, dashesToUnderscore=True)
+
     date = ndb.DateProperty()
     date_orig = ndb.StringProperty()
     date_userfriendly = ndb.ComputedProperty(getUserFriendlyDate)
     country = ndb.StringProperty()
+    countryNormalised = ndb.ComputedProperty(getNormalisedCountryName)
     area = ndb.StringProperty()
     area_normalised = ndb.StringProperty()
     location = ndb.StringProperty()

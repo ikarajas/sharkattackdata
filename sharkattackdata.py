@@ -119,7 +119,10 @@ class Helper():
             logging.info("Writing to cache: %s" % cacheKey)
             if not memcache.add(cacheKey, attacks[(i*self._attacksPerPart):((i+1)*self._attacksPerPart)]):
                 raise Exception("Unable to write country summary to memcache.")
-            
+
+    def readSingleAttackFromCache(self, identifier):
+        #TODO: Caching...
+        return SharkAttack.get_by_id(identifier)
         
 
 
@@ -150,11 +153,27 @@ class LocationData:
         self.urlFriendlyAreaName = urlFriendlyAreaName
 
     def __repr__(self):
-        return "LocationData (countryName: %s, areaName: %s, urlFriendlyAreaName: %s)" % (self.countryName, self.areaName, self.urlFriendlyAreaName)
+        return "LocationData (countryName: %s, areaName: %s, urlFriendlyAreaName: %s)" % \
+            (self.countryName, self.areaName, self.urlFriendlyAreaName)
 
 class MainPage(BasePage):
     def get(self):
         self.doIt({})
+
+class AttackPage(BasePage):
+    def __init__(self, request, response):
+        super(AttackPage, self).__init__(request, response)
+
+    def get(self, identifier):
+        attack = self.helper.readSingleAttackFromCache(identifier)
+        
+        super(AttackPage, self).doIt(
+            {},
+            subtemplate="templates/attack.html",
+            title="Shark Attack",
+            attack=attack
+            )
+
 
 class LocationPage(BasePage):
     def __init__(self, request, response):
@@ -259,10 +278,7 @@ class PostCountries(webapp2.RequestHandler):
     def post(self):
         data = self.request.body
         countries = json.loads(data)
-        for countryrow in countries:
-            toStore = Country()
-            toStore.name = countryrow[0]
-            toStore.put()
+        ndb.put_multi([Country(name=y[0]) for y in countries])
 
 class PostSharkAttacks(webapp2.RequestHandler):
     def post(self):
@@ -270,7 +286,7 @@ class PostSharkAttacks(webapp2.RequestHandler):
         attacks = json.loads(data)
         toStoreList = []
         for attackrow in attacks:
-            toStore = SharkAttack()
+            toStore = SharkAttack(id=attackrow[17])
             dateStr = attackrow[0]
             if dateStr == "":
                 dateValue = None
@@ -293,7 +309,6 @@ class PostSharkAttacks(webapp2.RequestHandler):
             toStore.date_is_approximate = attackrow[14] == "True"
             toStore.fatal = attackrow[15] == "True"
             toStore.provoked = attackrow[16] == "True"
-            toStore.identifier = attackrow[17]
             toStoreList.append(toStore)
         ndb.put_multi(toStoreList)
 
@@ -316,6 +331,7 @@ application = webapp2.WSGIApplication([
     ('/', MainPage, "main"),
     ('/place/([A-Za-z_]+)', CountryPage),
     ('/place/([A-Za-z_]+)/([A-Za-z0-9_]+)', AreaPage),
+    ('/attack/([A-Za-z0-9\-_]+)', AttackPage),
     ('/serviceops/post_countries', PostCountries),
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_countries', DeleteCountries),
