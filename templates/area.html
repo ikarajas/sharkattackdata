@@ -21,7 +21,7 @@
       <td>{{ attack.date_userfriendly }}</td>
       <td>{{ attack.location }}</td>
       <td>{{ attack.activity }}</td>
-      <td><a href="/attack/{{ attack.key.id() }}">Details</a></td>
+      <td><a href="/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
     </tr>
     {% endfor %}
   </tbody>

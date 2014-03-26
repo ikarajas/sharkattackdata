@@ -1,3 +1,4 @@
+import logging
 from utils import StringUtils
 from google.appengine.ext import ndb
 
@@ -17,14 +18,14 @@ class SharkAttack(ndb.Model):
     def getNormalisedCountryName(sa):
         return StringUtils.normaliseName(sa.country, toLower=True, spacesToUnderscore=True, dashesToUnderscore=True)
 
-    gsaf_case_number = ndb.StringProperty()
+    gsaf_case_number = ndb.ComputedProperty(lambda sa: sa.key.id())
     date = ndb.DateProperty()
     date_orig = ndb.StringProperty()
     date_userfriendly = ndb.ComputedProperty(getUserFriendlyDate)
-    country = ndb.StringProperty()
-    countryNormalised = ndb.ComputedProperty(getNormalisedCountryName)
-    area = ndb.StringProperty()
-    area_normalised = ndb.StringProperty()
+    country = ndb.ComputedProperty(lambda sa: sa.key.parent().parent().get().name) #make more efficient
+    countryNormalised = ndb.ComputedProperty(lambda sa: sa.key.parent().parent().id())
+    area = ndb.ComputedProperty(lambda sa: sa.key.parent().get().name) #make more efficient
+    area_normalised = ndb.ComputedProperty(lambda sa: sa.key.parent().id())
     location = ndb.StringProperty()
     activity = ndb.StringProperty()
     name = ndb.StringProperty()
@@ -44,3 +45,32 @@ class SharkAttack(ndb.Model):
 
 class Country(ndb.Model):
     name = ndb.StringProperty()
+    urlPart = ndb.ComputedProperty(lambda c: c.key.id())
+
+    @staticmethod
+    def forName(name):
+        id = StringUtils.normaliseName(name, toLower=True, spacesToUnderscore=True)
+        newCountry = Country.get_by_id(id)
+
+    def getOrCreateArea(self, name):
+        area = self.getAreaForName(name)
+        if area is None:
+            areaId = StringUtils.normaliseName(name, toLower=True, spacesToUnderscore=True)
+            area = Area(id=areaId, name=name, parent=ndb.Key("Country", self.key.id()))
+            area.put()
+        return area
+
+    def getAreas(self):
+        return Area.query(ancestor=self.key).order(Area.name).iter()
+
+    def getAreaForName(self, areaName):
+        areaId = StringUtils.normaliseName(areaName, toLower=True, spacesToUnderscore=True)
+        area = Area.get_by_id(areaId, parent=self.key)
+        return area
+
+class Area(ndb.Model):
+    name = ndb.StringProperty()
+    urlPart = ndb.ComputedProperty(lambda a:a.key.id())
+
+    def getAttacks(self):
+        return SharkAttack.query(ancestor=self.key).order(SharkAttack.date)
