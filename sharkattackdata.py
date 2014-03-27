@@ -125,14 +125,16 @@ class AttackPage(BasePage):
     def __init__(self, request, response):
         super(AttackPage, self).__init__(request, response)
 
-    def get(self, country, area, identifier):
-        key = ndb.Key("Country", country, "Area", area, "SharkAttack", identifier)
+    def get(self, countryId, areaId, attackId):
+        key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
         attack = key.get()
+        area = attack.key.parent().get()
+        country = area.key.parent().get()
         
         super(AttackPage, self).doIt(
             {},
             subtemplate="templates/attack.html",
-            title="Shark Attack",
+            title="Shark Attack at %s in %s, %s" % (attack.location, area.name, country.name),
             attack=attack
             )
 
@@ -228,8 +230,8 @@ class DeleteSharkAttacks(JsonServiceHandler):
 
 
 class PostSharkAttacks(JsonServiceHandler):
-    _countries = {}
-    _areas = {}
+    _countries = memcache.get("countryDict") or {}
+    _areas = memcache.get("areaDict") or {}
 
     def getCountry(self, countryId, name):
         if self._countries.has_key(countryId):
@@ -287,6 +289,8 @@ class PostSharkAttacks(JsonServiceHandler):
                                   provoked = attackrow[16] == "True")
             attacksToStore.append(toStore)
         ndb.put_multi(attacksToStore)
+        memcache.add("countryDict", self._countries)
+        memcache.add("areaDict", self._areas)
 
 
 class Authenticate(webapp2.RequestHandler):
