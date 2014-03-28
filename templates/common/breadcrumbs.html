@@ -1,0 +1,12 @@
+<div class="breadcrumb">
+{% for item in breadcrumb_data %}
+{% if item.url == "" %}
+{{ item.name }}
+{% else %}
+<a href="{{ item.url }}">{{ item.name }}</a>
+{% endif %}
+{% if not item.url == "" %}
+>>
+{% endif %}
+{% endfor %}
+</div>

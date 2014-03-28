@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title }}</title>
+
+
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<!-- GSAF styles -->
+<link rel="stylesheet" type="text/css" href="/assets/style/common.css">
+<link rel="stylesheet" type="text/css" href="/assets/style/gsaf.css">
+
+</head>
+
+<body class="gsafcustom">
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-12">
+	{% include "/templates/common/breadcrumbs.html" %}
+	{% include subtemplate %}
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
+

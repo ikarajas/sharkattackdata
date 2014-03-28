@@ -62,6 +62,17 @@ class Helper():
     def getCountryAttacksPartKey(self, displayCountry, part):
         return "attacks_%s_part_%s" % (displayCountry.urlPart, part)
 
+    def getUrlForNode(self, site, node):
+        path = "/"
+        if site == "gsaf":
+            path = os.path.join(path, "gsaf")
+        if node is None:
+            return path
+        if node._get_kind() == "Area":
+            return os.path.join(path, "place", node.key.parent().get().key.id(), node.key.id())
+        if node._get_kind() == "Country":
+            return os.path.join(path, "place", node.key.id())
+
     def readAttacksForCountryFromCache(self, country):
         summary = memcache.get(self.getCountrySummaryKey(country))
         if summary is None:
@@ -94,10 +105,44 @@ class BasePage(webapp2.RequestHandler):
         self.initialize(request, response)
         self.helper = Helper()
 
+    def getBreadcrumbData(self, node):
+        retval = []
+        firstRun = True
+        site = ""
+        if self.__class__.__name__.startswith("Gsaf"):
+            site = "gsaf"
+        while node is not None:
+            if firstRun:
+                if node._get_kind() == "SharkAttack":
+                    retval.append({ "name": node.key.id(), "url": "" })
+                else:
+                    retval.append({ "name": node.name, "url": "" })
+            else:
+                retval.append({ "name": node.name, "url": self.helper.getUrlForNode(site, node) })
+            firstRun = False
+            parentKey = node.key.parent()
+            if parentKey is None:
+                node = None
+            else:
+                node = parentKey.get()
+
+        retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
+
+        retval.reverse()
+        return retval
+
+    def resolveTemplatePath(self, relativePath):
+        root = "templates"
+        if (self.__class__.__name__.startswith("Gsaf")):
+            root = os.path.join(root, "gsaf")
+        else:
+            root = os.path.join(root, "sharkattackdata")
+        return os.path.join(root, relativePath)
+
     def doIt(self, *args, **kwargs):
         template_values = {
             "title": "Shark Attack Data",
-            "subtemplate": "templates/basepage.html",
+            "subtemplate": self.resolveTemplatePath("basepage.html"),
             "countries": sorted(self.helper.getCountries(), key=lambda c: c.name)
             }
         
@@ -105,12 +150,15 @@ class BasePage(webapp2.RequestHandler):
         for key, value in (dict(previousKwargs.items() + kwargs.items())).iteritems():
             template_values[key] = value
 
-        template = JINJA_ENVIRONMENT.get_template('templates/main.html')
+        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath("main.html"))
         self.response.write(template.render(template_values))
 
 class MainPage(BasePage):
     def get(self):
-        self.doIt({})
+        self.doIt(
+            {},
+            breadcrumb_data=self.getBreadcrumbData(None)
+            )
 
 class AttackPage(BasePage):
     def __init__(self, request, response):
@@ -124,11 +172,11 @@ class AttackPage(BasePage):
         
         super(AttackPage, self).doIt(
             {},
-            subtemplate="templates/attack.html",
+            subtemplate=self.resolveTemplatePath("attack.html"),
             title="Shark Attack at %s in %s, %s" % (attack.location, area.name, country.name),
-            attack=attack
+            attack=attack,
+            breadcrumb_data=self.getBreadcrumbData(attack)
             )
-
 
 class LocationPage(BasePage):
     def __init__(self, request, response):
@@ -158,13 +206,13 @@ class CountryPage(LocationPage):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         areas = [y for y in Area.query(ancestor=country.key).iter()]
         self._attacks = []
-        for area in areas:
-            self._attacks.extend(SharkAttack.query(ancestor=area.key).order(SharkAttack.date))
+        self._attacks.extend(SharkAttack.query(ancestor=country.key).order(SharkAttack.date))
 
         self.doIt(
             title="Shark Attack Data: %s" % country.name,
-            subtemplate="templates/country.html",
+            subtemplate=self.resolveTemplatePath("country.html"),
             country=country,
+            breadcrumb_data=self.getBreadcrumbData(country),
             areas = sorted(areas, key=lambda a: a.name))
 
 class AreaPage(LocationPage):
@@ -180,10 +228,37 @@ class AreaPage(LocationPage):
         self._attacks = [y for y in SharkAttack.query(ancestor=area.key).order(SharkAttack.date).iter()]
 
         self.doIt(
-            subtemplate="templates/area.html",
+            subtemplate=self.resolveTemplatePath("area.html"),
             title="Shark Attack Data: %s, %s" % (area.name, country.name),
             country=country,
-            area=area)
+            area=area,
+            breadcrumb_data=self.getBreadcrumbData(area))
+
+class GsafMainPage(MainPage):
+    def __init__(self, *args):
+        super(GsafMainPage, self).__init__(*args)
+        
+class GsafAttackPage(AttackPage):
+    def __init__(self, *args):
+        super(GsafAttackPage, self).__init__(*args)
+
+    def get(self, *args):
+        super(GsafAttackPage, self).get(*args)
+        
+class GsafAreaPage(AreaPage):
+    def __init__(self, *args):
+        super(GsafAreaPage, self).__init__(*args)
+
+    def get(self, *args):
+        super(GsafAreaPage, self).get(*args)
+        
+class GsafCountryPage(CountryPage):
+    def __init__(self, *args):
+        super(GsafCountryPage, self).__init__(*args)
+
+    def get(self, *args):
+        super(GsafCountryPage, self).get(*args)
+
 
 class JsonServiceHandler(webapp2.RequestHandler):
     def post(self):
@@ -289,13 +364,22 @@ class Authenticate(webapp2.RequestHandler):
         self.response.out.write('<html><body>%s</body></html>' % greeting)
 
 
+class Constants:
+    UrlPartCountryRegex = r"([A-Za-z\-_]+)"
+    UrlPartAreaRegex = r"([A-Za-z0-9\-_]+)"
+    UrlPartGsafCaseNumberRegex = r"([A-Za-z0-9\-\._]+)"
+
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 application = webapp2.WSGIApplication([
-    ('/', MainPage, "main"),
-    ('/place/([A-Za-z\-_]+)', CountryPage),
-    ('/place/([A-Za-z\-_]+)/([A-Za-z0-9\-_]+)', AreaPage),
-    ('/attack/([A-Za-z\-_]+)/([A-Za-z0-9\-_]+)/([A-Za-z0-9\-\._]+)', AttackPage),
+    ('/', MainPage),
+    ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
+    ('/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), AreaPage),
+    ('/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), AttackPage),
+    ('/gsaf', GsafMainPage, "main"),
+    ('/gsaf/place/%s' % (Constants.UrlPartCountryRegex), GsafCountryPage),
+    ('/gsaf/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), GsafAreaPage),
+    ('/gsaf/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), GsafAttackPage),
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
     ('/serviceops/authenticate', Authenticate)
