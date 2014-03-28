@@ -12,6 +12,8 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
+
+
 class CountrySummary:
     def __init__(self, country, attacks):
         self._totalCount = len(attacks)
@@ -103,19 +105,8 @@ class BasePage(webapp2.RequestHandler):
         for key, value in (dict(previousKwargs.items() + kwargs.items())).iteritems():
             template_values[key] = value
 
-        #logging.info(template_values)
         template = JINJA_ENVIRONMENT.get_template('templates/main.html')
         self.response.write(template.render(template_values))
-
-class LocationData:
-    def __init__(self, countryName=None, areaName=None, urlFriendlyAreaName=None):
-        self.countryName = countryName
-        self.areaName = areaName
-        self.urlFriendlyAreaName = urlFriendlyAreaName
-
-    def __repr__(self):
-        return "LocationData (countryName: %s, areaName: %s, urlFriendlyAreaName: %s)" % \
-            (self.countryName, self.areaName, self.urlFriendlyAreaName)
 
 class MainPage(BasePage):
     def get(self):
@@ -143,9 +134,9 @@ class LocationPage(BasePage):
     def __init__(self, request, response):
         super(LocationPage, self).__init__(request, response)
 
-    def doIt(self, locationData, **kwargs):
+    def doIt(self, **kwargs):
         logging.info("In LocationPage")
-        attacks = [y for y in self.getAttacksForLocation(locationData)]
+        attacks = [y for y in self.getAttacksForLocation()]
         
         super(LocationPage, self).doIt(
             kwargs,
@@ -160,7 +151,7 @@ class CountryPage(LocationPage):
     def __init__(self, request, response):
         super(CountryPage, self).__init__(request, response)
 
-    def getAttacksForLocation(self, locationData):
+    def getAttacksForLocation(self):
         return self._attacks
 
     def get(self, countryNameKey):
@@ -170,21 +161,17 @@ class CountryPage(LocationPage):
         for area in areas:
             self._attacks.extend(SharkAttack.query(ancestor=area.key).order(SharkAttack.date))
 
-        locationData = LocationData(country.name)
-        
-        logging.info(areas)
-
-        self.doIt(locationData,
-                  title="Shark Attack Data: %s" % country.name,
-                  subtemplate="templates/country.html",
-                  country=country,
-                  areas = sorted(areas, key=lambda a: a.name))
+        self.doIt(
+            title="Shark Attack Data: %s" % country.name,
+            subtemplate="templates/country.html",
+            country=country,
+            areas = sorted(areas, key=lambda a: a.name))
 
 class AreaPage(LocationPage):
     def __init__(self, request, response):
         super(AreaPage, self).__init__(request, response)
 
-    def getAttacksForLocation(self, locationData):
+    def getAttacksForLocation(self):
         return self._attacks
 
     def get(self, countryNameKey, areaNameKey):
@@ -192,11 +179,7 @@ class AreaPage(LocationPage):
         area = country.getAreaForName(areaNameKey)
         self._attacks = [y for y in SharkAttack.query(ancestor=area.key).order(SharkAttack.date).iter()]
 
-        areaData = LocationData(country.name, area.name, urlFriendlyAreaName=areaNameKey)
-        
-        logging.info(areaData)
-
-        self.doIt(areaData,
+        self.doIt(
             subtemplate="templates/area.html",
             title="Shark Attack Data: %s, %s" % (area.name, country.name),
             country=country,
