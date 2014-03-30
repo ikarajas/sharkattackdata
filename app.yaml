@@ -19,6 +19,9 @@ handlers:
   upload: assets/images/favicon.ico
 - url: /assets
   static_dir: assets
+- url: /robots.txt
+  static_files: misc/robots.txt
+  upload: misc/robots.txt
 - url: /serviceops/.*
   script: sharkattackdata.application
   login: admin
