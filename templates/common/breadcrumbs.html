@@ -1,12 +1,13 @@
-<div class="breadcrumb">
+{% if breadcrumb_data|length > 1 %}
+<ol class="breadcrumb">
 {% for item in breadcrumb_data %}
-{% if item.url == "" %}
-{{ item.name }}
-{% else %}
-<a href="{{ item.url }}">{{ item.name }}</a>
-{% endif %}
-{% if not item.url == "" %}
->>
-{% endif %}
+<li>
+  {% if item.url == "" %}
+  {{ item.name }}
+  {% else %}
+  <a href="{{ item.url }}">{{ item.name }}</a>
+  {% endif %}
+</li>
 {% endfor %}
-</div>
+</ol>
+{% endif %}

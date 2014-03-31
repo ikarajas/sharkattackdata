@@ -64,6 +64,6 @@ h3 {
     font-size: 12px;
 }
 
-div.breadcrumb {
-    font-size: 16px;
+ol.breadcrumb {
+    font-size: 14px;
 }

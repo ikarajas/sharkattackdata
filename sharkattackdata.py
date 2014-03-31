@@ -105,11 +105,14 @@ class BasePage(webapp2.RequestHandler):
         self.initialize(request, response)
         self.helper = Helper()
 
+    def isGsaf(self):
+        return self.__class__.__name__.startswith("Gsaf")
+
     def getBreadcrumbData(self, node):
         retval = []
         firstRun = True
         site = ""
-        if self.__class__.__name__.startswith("Gsaf"):
+        if self.isGsaf():
             site = "gsaf"
         while node is not None:
             if firstRun:
@@ -126,14 +129,15 @@ class BasePage(webapp2.RequestHandler):
             else:
                 node = parentKey.get()
 
-        retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
+        if self.isGsaf():
+            retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
 
         retval.reverse()
         return retval
 
     def resolveTemplatePath(self, relativePath):
         root = "templates"
-        if (self.__class__.__name__.startswith("Gsaf")):
+        if self.isGsaf():
             root = os.path.join(root, "gsaf")
         else:
             root = os.path.join(root, "sharkattackdata")
