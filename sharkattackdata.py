@@ -17,10 +17,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 class CountrySummary:
     def __init__(self, country, attacks):
         self._totalCount = len(attacks)
-        # self._countryName = displayLocationForCountry.name
-        # self._fatalCount = len([y for y in attacks if y.fatal])
-        # self._unprovokedCount = len([y for y in attacks if not y.provoked])
-        # self._fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
 
 class LocationSummary:
     def __init__(self, countryOrArea, attacks):
@@ -41,12 +37,10 @@ class Helper():
         return [x for x in seq if x not in seen and not seen_add(x)]
 
     def getCountries(self):
-        countries = None #memcache.get("countries")
+        countries = None
         if countries is None:
             query = Country.query()
             countries = [y for y in query.iter()]
-            # if not memcache.add("countries", countries):
-            #     logging.error("Couldn't save countries to memcache.")
         return countries
 
     def getNormalisedCountryName(self, countryName):
@@ -187,7 +181,6 @@ class LocationPage(BasePage):
         super(LocationPage, self).__init__(request, response)
 
     def doIt(self, **kwargs):
-        logging.info("In LocationPage")
         attacks = [y for y in self.getAttacksForLocation()]
         
         super(LocationPage, self).doIt(
