@@ -1,0 +1,5 @@
+<ul class="nav nav-pills">
+  {% for country in countries %}
+  <li><a href="/country-overview/{{country.urlPart}}">{{country.name}}</a></li>
+  {% endfor %}
+</ul>

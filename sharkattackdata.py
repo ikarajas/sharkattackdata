@@ -58,14 +58,15 @@ class Helper():
 
     def getUrlForNode(self, site, node):
         path = "/"
-        if site == "gsaf":
+        isGsaf = site == "gsaf"
+        if isGsaf:
             path = os.path.join(path, "gsaf")
         if node is None:
-            return path
+            return path if isGsaf else os.path.join(path, "place")
         if node._get_kind() == "Area":
             return os.path.join(path, "place", node.key.parent().get().key.id(), node.key.id())
         if node._get_kind() == "Country":
-            return os.path.join(path, "place", node.key.id())
+            return os.path.join(path, "place" if isGsaf else "country-overview", node.key.id())
 
     def readAttacksForCountryFromCache(self, country):
         summary = memcache.get(self.getCountrySummaryKey(country))
@@ -123,8 +124,7 @@ class BasePage(webapp2.RequestHandler):
             else:
                 node = parentKey.get()
 
-        if self.isGsaf():
-            retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
+        retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
 
         retval.reverse()
         return retval
@@ -140,8 +140,7 @@ class BasePage(webapp2.RequestHandler):
     def doIt(self, *args, **kwargs):
         template_values = {
             "title": "Shark Attack Data",
-            "subtemplate": self.resolveTemplatePath("basepage.html"),
-            "countries": sorted(self.helper.getCountries(), key=lambda c: c.name)
+            "subtemplate": self.resolveTemplatePath("basepage.html")
             }
         
         previousKwargs = args[0]
@@ -156,6 +155,18 @@ class MainPage(BasePage):
         self.doIt(
             {},
             breadcrumb_data=self.getBreadcrumbData(None)
+            )
+
+class SharkAttacksByLocationPage(BasePage):
+    def __init__(self, request, response):
+        super(SharkAttacksByLocationPage, self).__init__(request, response)
+
+    def get(self):
+        super(SharkAttacksByLocationPage, self).doIt(
+            {},
+            subtemplate=self.resolveTemplatePath("places.html"),
+            title="Shark Attacks by Location",
+            countries=sorted(self.helper.getCountries(), key=lambda c: c.name)
             )
 
 class AttackPage(BasePage):
@@ -199,18 +210,36 @@ class CountryPage(LocationPage):
     def getAttacksForLocation(self):
         return self._attacks
 
-    def get(self, countryNameKey):
-        country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
-        areas = [y for y in Area.query(ancestor=country.key).iter()]
+    def onGet(self, countryNameKey):
+        self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
+        self._areas = [y for y in Area.query(ancestor=self._country.key).iter()]
         self._attacks = []
-        self._attacks.extend(SharkAttack.query(ancestor=country.key).order(SharkAttack.date))
+        self._attacks.extend(SharkAttack.query(ancestor=self._country.key).order(SharkAttack.date))
+
+    def get(self, countryNameKey):
+        self.onGet(countryNameKey)
+        logging.info("Hello...")
+        self.doIt(
+            title="Shark Attack Data: %s" % self._country.name,
+            subtemplate=self.resolveTemplatePath("country.html"),
+            country=self._country,
+            areas = sorted(self._areas, key=lambda a: a.name), #needed by GSAF page
+            breadcrumb_data=self.getBreadcrumbData(self._country))
+
+class CountryOverviewPage(CountryPage):
+    def __init__(self, request, response):
+        super(CountryOverviewPage, self).__init__(request, response)
+
+    def get(self, countryNameKey):
+        self.onGet(countryNameKey)
 
         self.doIt(
-            title="Shark Attack Data: %s" % country.name,
-            subtemplate=self.resolveTemplatePath("country.html"),
-            country=country,
-            breadcrumb_data=self.getBreadcrumbData(country),
-            areas = sorted(areas, key=lambda a: a.name))
+            title="Shark Attack Data: %s" % self._country.name,
+            subtemplate=self.resolveTemplatePath("countryOverview.html"),
+            country=self._country,
+            breadcrumb_data=self.getBreadcrumbData(self._country),
+            areas = sorted(self._areas, key=lambda a: a.name),
+            show_all_attacks=(len(self._attacks) < 15))
 
 class AreaPage(LocationPage):
     def __init__(self, request, response):
@@ -232,6 +261,12 @@ class AreaPage(LocationPage):
             breadcrumb_data=self.getBreadcrumbData(area))
 
 class GsafMainPage(MainPage):
+    def get(self):
+        self.doIt(
+            {},
+            breadcrumb_data=self.getBreadcrumbData(None),
+            countries=sorted(self.helper.getCountries(), key=lambda c: c.name)
+            )
     def __init__(self, *args):
         super(GsafMainPage, self).__init__(*args)
         
@@ -370,10 +405,12 @@ debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/place', SharkAttacksByLocationPage),
+    ('/country-overview/%s' % (Constants.UrlPartCountryRegex), CountryOverviewPage),
     ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
     ('/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), AreaPage),
     ('/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), AttackPage),
-    ('/gsaf', GsafMainPage, "main"),
+    ('/gsaf', GsafMainPage),
     ('/gsaf/place/%s' % (Constants.UrlPartCountryRegex), GsafCountryPage),
     ('/gsaf/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), GsafAreaPage),
     ('/gsaf/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), GsafAttackPage),

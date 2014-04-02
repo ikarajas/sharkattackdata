@@ -34,12 +34,9 @@
     <div class="row">
       <div class="col-sm-3 blog-sidebar">
         <div class="sidebar-module">
-          <h4>Attacks by country</h4>
-          <ol class="list-unstyled">
-	    {% for country in countries %}
-            <li><a href="/place/{{country.urlPart}}">{{country.name}}</a></li>
-	    {% endfor %}
-          </ol>
+	  <ul class="nav">
+            <li><a href="/place">Shark Attacks by location</a></li>
+	  </ul>
         </div>
       </div>
       <div class="col-sm-8">

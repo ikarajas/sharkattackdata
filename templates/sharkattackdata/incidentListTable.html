@@ -1,14 +1,8 @@
-{% autoescape true %}
-
-<h2>Shark attack data for {{ area.name }}, {{ country.name }}</h2>
-
-{% include "/templates/sharkattackdata/placeSummaryTable.html" %}
-
-<h3>Attacks</h3>
 <table class="table table-striped incident-list">
   <tbody>
     <thead>
       <th class="date">Date</th>
+      <th>Area</th>
       <th>Location</th>
       <th>Activity</th>
       <th></th>
@@ -16,6 +10,7 @@
     {% for attack in attacks %}
     <tr>
       <td>{{ attack.date_userfriendly }}</td>
+      <td>{{ attack.area }}</td>
       <td>{{ attack.location }}</td>
       <td>{{ attack.activity }}</td>
       <td><a href="/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
@@ -23,5 +18,3 @@
     {% endfor %}
   </tbody>
 </table>
-{% endautoescape %}
-
