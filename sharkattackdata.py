@@ -103,7 +103,7 @@ class BasePage(webapp2.RequestHandler):
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
 
-    def head(self):
+    def head(self, *args, **kwargs):
         # Prevent 405 errors on HEAD requests. Note: we'll be lying about Content-Length.
         return
 
