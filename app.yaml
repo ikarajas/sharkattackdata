@@ -22,6 +22,9 @@ handlers:
 - url: /robots.txt
   static_files: misc/robots.txt
   upload: misc/robots.txt
+- url: /BingSiteAuth.xml
+  static_files: misc/BingSiteAuth.xml
+  upload: misc/BingSiteAuth.xml
 - url: /serviceops/.*
   script: sharkattackdata.application
   login: admin
