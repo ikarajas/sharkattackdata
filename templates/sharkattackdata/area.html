@@ -5,23 +5,8 @@
 {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
 
 <h3>Attacks</h3>
-<table class="table table-striped incident-list">
-  <tbody>
-    <thead>
-      <th class="date">Date</th>
-      <th>Location</th>
-      <th>Activity</th>
-      <th></th>
-    </thead>
-    {% for attack in attacks %}
-    <tr>
-      <td>{{ attack.date_userfriendly }}</td>
-      <td>{{ attack.location }}</td>
-      <td>{{ attack.activity }}</td>
-      <td><a href="/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+
+{% include "/templates/sharkattackdata/incidentListTable.html" %}
+
 {% endautoescape %}
 

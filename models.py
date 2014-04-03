@@ -40,8 +40,8 @@ class SharkAttack(ndb.Model):
     provoked = ndb.BooleanProperty()
     identifier = ndb.StringProperty(indexed=True)
 
-    unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Yes" if not sa.provoked else "No")
-    fatalUserFriendly = ndb.ComputedProperty(lambda sa: "Yes" if sa.fatal else "No")
+    unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Unprovoked" if not sa.provoked else "Provoked")
+    fatalUserFriendly = ndb.ComputedProperty(lambda sa: "Fatal" if sa.fatal else "Not fatal")
 
 class Country(ndb.Model):
     name = ndb.StringProperty()

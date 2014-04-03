@@ -1,3 +1,6 @@
 table.incident-list th.date {
     width: 8em;
 }
+table.incident-list th.fatal {
+    width: 5em;
+}

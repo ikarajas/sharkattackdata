@@ -218,7 +218,6 @@ class CountryPage(LocationPage):
 
     def get(self, countryNameKey):
         self.onGet(countryNameKey)
-        logging.info("Hello...")
         self.doIt(
             title="Shark Attack Data: %s" % self._country.name,
             subtemplate=self.resolveTemplatePath("country.html"),

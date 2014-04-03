@@ -1,18 +1,27 @@
+
 <table class="table table-striped incident-list">
   <tbody>
     <thead>
       <th class="date">Date</th>
-      <th>Area</th>
-      <th>Location</th>
-      <th>Activity</th>
-      <th></th>
+      {% if not area %}
+      <th class="area">Area</th>
+      {% endif %}
+      <th class="location">Location</th>
+      <th class="activity">Activity</th>
+      <th class="unprovoked">Unprovoked?</th>
+      <th class="fatal">Fatal?</th>
+      <th class="details"></th>
     </thead>
     {% for attack in attacks %}
     <tr>
       <td>{{ attack.date_userfriendly }}</td>
+      {% if not area %}
       <td>{{ attack.area }}</td>
+      {% endif %}
       <td>{{ attack.location }}</td>
       <td>{{ attack.activity }}</td>
+      <td>{{ attack.unprovokedUserFriendly }}</td>
+      <td>{{ attack.fatalUserFriendly }}</td>
       <td><a href="/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
     </tr>
     {% endfor %}
