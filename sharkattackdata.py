@@ -6,6 +6,7 @@ from google.appengine.ext import ndb
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
+from repositories import SharkAttackRepository
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -13,10 +14,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     autoescape=True)
 
 
-
-class CountrySummary:
-    def __init__(self, country, attacks):
-        self._totalCount = len(attacks)
 
 class LocationSummary:
     def __init__(self, countryOrArea, attacks):
@@ -29,7 +26,7 @@ class LocationSummary:
 
 class Helper():
     def __init__(self):
-        self._attacksPerPart = 1000
+        pass
 
     def uniqueify(self, seq):
         seen = set()
@@ -50,9 +47,6 @@ class Helper():
         displayCountries = self.getCountries()
         return dict([[self.getNormalisedCountryName(y.name), y] for y in displayCountries])
 
-    def getCountrySummaryKey(self, country):
-        return "attacks_%s_summary" % displayCountry.urlPart
-
     def getCountryAttacksPartKey(self, displayCountry, part):
         return "attacks_%s_part_%s" % (displayCountry.urlPart, part)
 
@@ -68,37 +62,12 @@ class Helper():
         if node._get_kind() == "Country":
             return os.path.join(path, "place" if isGsaf else "country-overview", node.key.id())
 
-    def readAttacksForCountryFromCache(self, country):
-        summary = memcache.get(self.getCountrySummaryKey(country))
-        if summary is None:
-            return None
-        attacks = []
-        numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
-        for i in range(numParts):
-            cacheKey = self.getCountryAttacksPartKey(displayCountry, i)
-            logging.info("Retrieving from cache: %s" % cacheKey)
-            theseAttacks = memcache.get(cacheKey)
-            if theseAttacks is None:
-                return None
-            attacks.extend(theseAttacks)
-        return attacks
-        
-    def writeAttacksForCountryToCache(self, country, attacks):
-        summary = CountrySummary(country, attacks)
-        if not memcache.add(self.getCountrySummaryKey(country), summary):
-            raise Exception("Unable to write country summary to memcache.")
-        numParts = int(math.ceil(float(summary._totalCount)/float(self._attacksPerPart)))
-        for i in range(numParts):
-            cacheKey = self.getCountryAttacksPartKey(displayCountry, i)
-            logging.info("Writing to cache: %s" % cacheKey)
-            if not memcache.add(cacheKey, attacks[(i*self._attacksPerPart):((i+1)*self._attacksPerPart)]):
-                raise Exception("Unable to write country summary to memcache.")
-
 
 class BasePage(webapp2.RequestHandler):
     def __init__(self, request, response):
         self.initialize(request, response)
         self.helper = Helper()
+        self._sharkAttackRepository = SharkAttackRepository()
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
@@ -217,8 +186,7 @@ class CountryPage(LocationPage):
     def onGet(self, countryNameKey):
         self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         self._areas = [y for y in Area.query(ancestor=self._country.key).iter()]
-        self._attacks = []
-        self._attacks.extend(SharkAttack.query(ancestor=self._country.key).order(SharkAttack.date))
+        self._attacks = self._sharkAttackRepository.getDescendantAttacksForKey(self._country.key)
 
     def get(self, countryNameKey):
         self.onGet(countryNameKey)
@@ -254,7 +222,7 @@ class AreaPage(LocationPage):
     def get(self, countryNameKey, areaNameKey):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         area = country.getAreaForName(areaNameKey)
-        self._attacks = [y for y in SharkAttack.query(ancestor=area.key).order(SharkAttack.date).iter()]
+        self._attacks = self._sharkAttackRepository.getDescendantAttacksForKey(area.key)
 
         self.doIt(
             subtemplate=self.resolveTemplatePath("area.html"),
