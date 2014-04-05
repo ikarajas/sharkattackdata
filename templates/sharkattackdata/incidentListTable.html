@@ -1,17 +1,16 @@
-
-<table class="table table-striped incident-list">
+<table class="table table-striped incident-list tablesorter">
+  <thead>
+    <th class="date">Date</th>
+    {% if not area %}
+    <th class="area">Area</th>
+    {% endif %}
+    <th class="location">Location</th>
+    <th class="activity">Activity</th>
+    <th class="unprovoked">Unprovoked?</th>
+    <th class="fatal">Fatal?</th>
+    <th class="details"></th>
+  </thead>
   <tbody>
-    <thead>
-      <th class="date">Date</th>
-      {% if not area %}
-      <th class="area">Area</th>
-      {% endif %}
-      <th class="location">Location</th>
-      <th class="activity">Activity</th>
-      <th class="unprovoked">Unprovoked?</th>
-      <th class="fatal">Fatal?</th>
-      <th class="details"></th>
-    </thead>
     {% for attack in attacks %}
     <tr>
       <td>{{ attack.date_userfriendly }}</td>
