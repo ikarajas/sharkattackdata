@@ -68,6 +68,7 @@ class BasePage(webapp2.RequestHandler):
         self.initialize(request, response)
         self.helper = Helper()
         self._sharkAttackRepository = SharkAttackRepository()
+        self._pageTemplate = "main.html"
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
@@ -120,11 +121,12 @@ class BasePage(webapp2.RequestHandler):
         for key, value in (dict(previousKwargs.items() + kwargs.items())).iteritems():
             template_values[key] = value
 
-        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath("main.html"))
+        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath(self._pageTemplate))
         self.response.write(template.render(template_values))
 
 class MainPage(BasePage):
     def get(self):
+        self._pageTemplate = "frontPage.html"
         self.doIt(
             {},
             breadcrumb_data=self.getBreadcrumbData(None)

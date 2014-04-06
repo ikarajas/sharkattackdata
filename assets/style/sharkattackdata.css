@@ -1,3 +1,18 @@
+div.jumbotron {
+    background-image: url(/assets/images/jumbotron_sharks.jpg);
+    text-shadow: black 0.3em 0.3em 0.3em;
+}
+
+div.page-header {
+    padding: 10px 10px 10px 20px;
+    background-image: url(/assets/images/jumbotron_sharks.jpg);
+    text-shadow: black 0.3em 0.3em 0.3em;
+}
+
+div.page-header a {
+    color: white
+}
+
 table.incident-list th.date {
     width: 8em;
 }
