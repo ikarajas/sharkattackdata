@@ -165,31 +165,33 @@ class LocationPage(BasePage):
         super(LocationPage, self).__init__(request, response)
 
     def doIt(self, **kwargs):
+        attackPlaceSummary = self.getAttackPlaceSummary()
         attacks = [y for y in self.getAttacksForLocation()]
         
         super(LocationPage, self).doIt(
             kwargs,
             attacks=attacks,
-            totalAttacksCount=len(attacks),
-            totalFatalCount=len([y for y in attacks if y.fatal]),
-            totalUnprovokedCount=len([y for y in attacks if not y.provoked]),
-            totalFatalUnprovokedCount=len([y for y in attacks if not y.provoked and y.fatal])
+            attackPlaceSummary=attackPlaceSummary
             )
 
 class CountryPage(LocationPage):
     def __init__(self, request, response):
         super(CountryPage, self).__init__(request, response)
 
+    def getAttackPlaceSummary(self):
+        return self._attackPlaceSummary
+
     def getAttacksForLocation(self):
         return self._attacks
 
     def onGet(self, countryNameKey):
         self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
-        self._areas = [y for y in Area.query(ancestor=self._country.key).iter()]
-        self._attacks = self._sharkAttackRepository.getDescendantAttacksForKey(self._country.key)
+        self._areas = [y for y in Area.query(ancestor=self._country.key).fetch()]
+        self._attackPlaceSummary = self._sharkAttackRepository.readAttackSummary(self._country.key)
 
     def get(self, countryNameKey):
         self.onGet(countryNameKey)
+        self._attacks = self._sharkAttackRepository.getDescendantAttacksForKey(self._country.key)
         self.doIt(
             title="Shark Attack Data: %s" % self._country.name,
             subtemplate=self.resolveTemplatePath("country.html"),
@@ -201,20 +203,28 @@ class CountryOverviewPage(CountryPage):
     def __init__(self, request, response):
         super(CountryOverviewPage, self).__init__(request, response)
 
+    def getAttacksForLocation(self):
+        return self._attacks
+
     def get(self, countryNameKey):
         self.onGet(countryNameKey)
+        showAllAttacks = (self._attackPlaceSummary.totalCount < 15)
+        self._attacks = [] if not showAllAttacks else self._sharkAttackRepository.getDescendantAttacksForKey(self._country.key)
 
         self.doIt(
             title="Shark Attack Data: %s" % self._country.name,
             subtemplate=self.resolveTemplatePath("countryOverview.html"),
             country=self._country,
             breadcrumb_data=self.getBreadcrumbData(self._country),
-            areas = sorted(self._areas, key=lambda a: a.name),
-            show_all_attacks=(len(self._attacks) < 15))
+            areas=sorted(self._areas, key=lambda a: a.name),
+            show_all_attacks=showAllAttacks)
 
 class AreaPage(LocationPage):
     def __init__(self, request, response):
         super(AreaPage, self).__init__(request, response)
+
+    def getAttackPlaceSummary(self):
+        return self._attackPlaceSummary
 
     def getAttacksForLocation(self):
         return self._attacks
@@ -222,6 +232,7 @@ class AreaPage(LocationPage):
     def get(self, countryNameKey, areaNameKey):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         area = country.getAreaForName(areaNameKey)
+        self._attackPlaceSummary = self._sharkAttackRepository.readAttackSummary(area.key)
         self._attacks = self._sharkAttackRepository.getDescendantAttacksForKey(area.key)
 
         self.doIt(

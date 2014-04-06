@@ -19,3 +19,15 @@ indexes:
   ancestor: yes
   properties:
   - name: date
+
+- kind: SharkAttack
+  ancestor: yes
+  properties:
+  - name: date
+  - name: activity
+  - name: area
+  - name: date_orig
+  - name: date_userfriendly
+  - name: fatal
+  - name: location
+  - name: provoked

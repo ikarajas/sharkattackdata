@@ -16,7 +16,7 @@
 {% include "/templates/sharkattackdata/incidentListTable.html" %}
 {% else %}
 <ul class="nav">
-  <li><a href="/place/{{ country.urlPart }}">View all {{ attacks|length }} attacks in {{ country.name }}</a></li>
+  <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
 </ul>
 {% endif %}
 
