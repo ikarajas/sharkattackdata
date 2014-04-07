@@ -64,13 +64,12 @@ class SharkAttackRepository:
         numParts = int(math.ceil(float(summary.totalCount)/float(self._attacksPerPart)))
         for i in range(numParts):
             cacheKey = self.getAttacksPartKey(key, i)
-            logging.info("Writing to cache: %s" % cacheKey)
+            #logging.info("Writing to cache: %s" % cacheKey)
             if not memcache.set(cacheKey, attacks[(i*self._attacksPerPart):((i+1)*self._attacksPerPart)]):
                 raise Exception("Unable to write attack place summary to memcache.")
         return summary
 
     def __getDescendantAttackDataInternal(self, key):
-        logging.info("__getDescendantAttackDataInternal %s" % self.getAttackNodeId(key))
         query = SharkAttack.query(ancestor=key).order(SharkAttack.date)
         attacks = query.fetch(
             projection=[SharkAttack.date, SharkAttack.date_orig, SharkAttack.date_userfriendly, SharkAttack.area,
