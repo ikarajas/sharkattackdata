@@ -2,23 +2,24 @@
 
 <h2>Shark attack data for {{ country.name }}</h2>
 
-{% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+<div class="col-sm-6">
+  <h3>Attacks by area</h3>
+  <ul class="nav">
+    {% for area in areas %}
+    <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
+    {% endfor %}
+  </ul>
 
-<h3>Attacks by area</h3>
-<ul class="nav">
-  {% for area in areas %}
-  <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
-  {% endfor %}
-</ul>
+  <h3>All Attacks</h3>
+  <ul class="nav">
+    <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
+  </ul>
+</div>
 
-<h3>All Attacks</h3>
-{% if show_all_attacks %}
-{% include "/templates/sharkattackdata/incidentListTable.html" %}
-{% else %}
-<ul class="nav">
-  <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
-</ul>
-{% endif %}
+<div class="col-sm-6">
+  <h3>Summary</h3>
+  {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+</div>
 
 {% endautoescape %}
 

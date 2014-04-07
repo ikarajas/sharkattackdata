@@ -126,7 +126,6 @@ class BasePage(webapp2.RequestHandler):
 
 class MainPage(BasePage):
     def get(self):
-        self._pageTemplate = "frontPage.html"
         self.doIt(
             {},
             breadcrumb_data=self.getBreadcrumbData(None)

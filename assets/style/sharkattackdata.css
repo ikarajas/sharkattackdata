@@ -1,12 +1,6 @@
-div.jumbotron {
+.jumbotron {
     background-image: url(/assets/images/jumbotron_sharks.jpg);
-    text-shadow: black 0.3em 0.3em 0.3em;
-}
-
-div.page-header {
-    padding: 10px 10px 10px 20px;
-    background-image: url(/assets/images/jumbotron_sharks.jpg);
-    text-shadow: black 0.3em 0.3em 0.3em;
+    background-size: cover;
 }
 
 div.page-header a {
@@ -21,4 +15,8 @@ table.place-summary {
 }
 table.place-summary th {
     width: 8em;
+}
+
+div.attack-place-summary div.charts div {
+    float: left;
 }

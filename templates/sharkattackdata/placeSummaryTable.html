@@ -1,18 +1,26 @@
-<table class="table table-striped place-summary">
-  <tr>
-    <th>Total</th>
-    <td>{{ attackPlaceSummary.totalCount }}</td>
+<div class="attack-place-summary"
+     data-total-count="{{ attackPlaceSummary.totalCount }}"
+     data-fatal-count="{{ attackPlaceSummary.fatalCount }}"
+     data-unprovoked-count="{{ attackPlaceSummary.unprovokedCount }}"
+     data-fatal-and-unprovoked-count="{{ attackPlaceSummary.fatalAndUnprovokedCount }}">
+  <table class="table table-striped place-summary">
+    <tr>
+      <th>Total</th>
+      <td>{{ attackPlaceSummary.totalCount }}</td>
+    </tr>
+    <tr>
+      <th>Fatal</th>
+      <td>{{ attackPlaceSummary.fatalCount }}</td>
+    </tr>
+    <tr>
+      <th>Unprovoked</th>
+      <td>{{ attackPlaceSummary.unprovokedCount }}</td>
+    </tr>
+    <tr>
+      <th>Fatal and unprovoked</th>
+      <td>{{ attackPlaceSummary.fatalAndUnprovokedCount }}</td>
   </tr>
-  <tr>
-    <th>Fatal</th>
-    <td>{{ attackPlaceSummary.fatalCount }}</td>
-  </tr>
-  <tr>
-    <th>Unprovoked</th>
-    <td>{{ attackPlaceSummary.unprovokedCount }}</td>
-  </tr>
-  <tr>
-    <th>Fatal and unprovoked</th>
-    <td>{{ attackPlaceSummary.fatalAndUnprovokedCount }}</td>
-  </tr>
-</table>
+  </table>
+
+  <div class="charts clearfix"></div>
+</div>
