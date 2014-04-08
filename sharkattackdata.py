@@ -7,6 +7,7 @@ from google.appengine.ext import ndb
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories import SharkAttackRepository
+import rssfeeds
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -393,10 +394,23 @@ application = webapp2.WSGIApplication([
     ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
     ('/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), AreaPage),
     ('/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), AttackPage),
+
     ('/gsaf', GsafMainPage),
+    ('/gsaf/place', GsafMainPage),
     ('/gsaf/place/%s' % (Constants.UrlPartCountryRegex), GsafCountryPage),
     ('/gsaf/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), GsafAreaPage),
     ('/gsaf/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), GsafAttackPage),
+
+    ('/feeds/places\.rss', rssfeeds.CountryFeed),
+    ('/feeds/places/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
+    ('/feeds/attacks/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
+    ('/feeds/attacks/%s/%s\.rss' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
+
+    ('/gsaf/feeds/places\.rss', rssfeeds.CountryFeed),
+    ('/gsaf/feeds/places/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
+    ('/gsaf/feeds/attacks/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
+    ('/gsaf/feeds/attacks/%s/%s\.rss' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
+
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
     ('/serviceops/authenticate', Authenticate)

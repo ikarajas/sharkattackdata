@@ -86,3 +86,27 @@ class SharkAttackRepository:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
 
         return attacks
+
+
+class CountryRepository:
+    def getCountries(self):
+        query = Country.query().order(Country.name)
+        countries = query.fetch()
+        return countries
+
+    def getCountry(self, countryId):
+        country = ndb.Key("Country", countryId).get()
+        return country
+
+
+
+class AreaRepository:
+    def getArea(self, countryId, areaId):
+        return ndb.Key("Country", countryId, "Area", areaId).get()
+
+    def getAreasOfCountry(self, country):
+        if not country.key.kind() == "Country":
+            raise ValueError("key must refer to an instance of Country.")
+        query = Area.query(ancestor=country.key).order(Area.name)
+        areas = query.fetch()
+        return areas
