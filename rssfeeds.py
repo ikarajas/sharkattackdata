@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, webapp2, logging, datetime
+from xml.dom.minidom import Text, Element
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
@@ -42,19 +43,39 @@ class RssFeed(webapp2.RequestHandler):
         self.response.headers['Content-Type'] = "application/rss+xml"
         rssItems = []
         for item in self.getItems(*args):
-            subPlaceFeedText = "\n        <sharkattackdata:subPlaceFeedLink>%s</sharkattackdata:subPlaceFeedLink>" % item.subPlaceFeedLink \
-                          if item.subPlaceFeedLink else ""
-            attackFeedText = "\n        <sharkattackdata:attackFeedLink>%s</sharkattackdata:attackFeedLink>" % item.attackFeedLink \
-                          if item.attackFeedLink else ""
+            itemElem = Element("item")
 
-            text = """
-    <item>
-        <title>%s</title>
-        <link>%s</link>
-        <description>%s</description>%s%s
-    </item>
-    """ % (item.title, item.link, item.description, subPlaceFeedText, attackFeedText)
+            titleElem = Element("title")
+            titleText = Text()
+            titleText.data = item.title
+            titleElem.appendChild(titleText)
+            itemElem.appendChild(titleElem)
+            linkElem = Element("link")
+            linkText = Text()
+            linkText.data = item.link
+            linkElem.appendChild(linkText)
+            itemElem.appendChild(linkElem)
+            descriptionElem = Element("description")
+            descriptionText = Text()
+            descriptionText.data = item.description
+            descriptionElem.appendChild(descriptionText)
+            itemElem.appendChild(descriptionElem)
+            if item.subPlaceFeedLink:
+                subPlaceFeedLinkElem = Element("sharkattackdata:subPlaceFeedLink")
+                subPlaceFeedLinkText = Text()
+                subPlaceFeedLinkText.data = item.subPlaceFeedLink
+                subPlaceFeedLinkElem.appendChild(subPlaceFeedLinkText)
+                itemElem.appendChild(subPlaceFeedLinkElem)
+            if item.attackFeedLink:
+                attackFeedLinkElem = Element("sharkattackdata:attackFeedLink")
+                attackFeedLinkText = Text()
+                attackFeedLinkText.data = item.attackFeedLink
+                attackFeedLinkElem.appendChild(attackFeedLinkText)
+                itemElem.appendChild(attackFeedLinkElem)
+
+            text = itemElem.toxml()
             rssItems.append(text)
+
         responseText = """<?xml version="1.0"?>
 <rss version="2.0" xmlns:sharkattackdata="http://sharkattackdata.com/rss/modules/1.0/">
     <channel>
