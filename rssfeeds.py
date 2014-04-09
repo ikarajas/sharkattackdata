@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, webapp2, logging, datetime
-from xml.dom.minidom import Text, Element
+from xml.dom.minidom import Text, Element, Document
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
@@ -93,8 +93,8 @@ class CountryFeed(RssFeed):
         self._configure("Countries", "%splace" % (self._baseUrl), "Countries where incidents have occurred.")
         for country in self._countryRepository.getCountries():
             yield FeedItem(country.name, "%splace/%s" % (self._baseUrl, country.urlPart), "Country of %s." % country.name,
-                           subPlaceFeedLink="%splaces/%s.rss" % (self._feedsBaseUrl, country.urlPart),
-                           attackFeedLink="%sattacks/%s.rss" % (self._feedsBaseUrl, country.urlPart))
+                           subPlaceFeedLink="%splaces/%s.xml" % (self._feedsBaseUrl, country.urlPart),
+                           attackFeedLink="%sattacks/%s.xml" % (self._feedsBaseUrl, country.urlPart))
     
 class AreaFeed(RssFeed):
     def __init__(self, *args):
@@ -102,12 +102,14 @@ class AreaFeed(RssFeed):
 
     def getItems(self, countryKey):
         country = self._countryRepository.getCountry(countryKey)
+        if country is None:
+            self.abort(404)
         self._configure("Areas in %s" % country.name, "%splace/%s" % (self._baseUrl, country.urlPart),
                         "Areas in %s where incidents have occurred." % country.name)
         for area in self._areaRepository.getAreasOfCountry(country):
             yield FeedItem(area.name, "%splace/%s/%s" % (self._baseUrl, country.urlPart, area.urlPart),
                            "%s, %s." % (area.name , country.name),
-                           attackFeedLink="%sattacks/%s/%s.rss" % (self._feedsBaseUrl, country.urlPart, area.urlPart))
+                           attackFeedLink="%sattacks/%s/%s.xml" % (self._feedsBaseUrl, country.urlPart, area.urlPart))
     
 class SharkAttackFeed(RssFeed):
     def __init__(self, *args):
@@ -123,17 +125,22 @@ class SharkAttackFeed(RssFeed):
         link = None
         if areaKey is None:
             node = self._countryRepository.getCountry(countryKey)
+            if node is None:
+                self.abort(404)
             title = "Shark Attacks in %s" % node.name
-            link = self._baseUrl + "place"
         else:
             node = self._areaRepository.getArea(countryKey, areaKey)
+            if node is None:
+                self.abort(404)
             parentCountry = node.key.parent().get()
             title = "Shark Attacks in %s, %s" % (node.name, parentCountry.name)
-            link = self._baseUrl + "place"
+
+        link = self._baseUrl + "place"
+
 
         self._configure(title, link, title)
         for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):
             attackTitle = "%s at %s, %s" % (attack.date_userfriendly, attack.location, attack.area)
-            yield FeedItem(attackTitle, "%sattack/%s" % (self._baseUrl, attack.key.id()),
+            yield FeedItem(attackTitle, "%sattack/%s/%s/%s" % (self._baseUrl, attack.countryNormalised, attack.area_normalised, attack.key.id()),
                            attackTitle)
     

@@ -401,15 +401,15 @@ application = webapp2.WSGIApplication([
     ('/gsaf/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), GsafAreaPage),
     ('/gsaf/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), GsafAttackPage),
 
-    ('/feeds/places\.rss', rssfeeds.CountryFeed),
-    ('/feeds/places/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
-    ('/feeds/attacks/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
-    ('/feeds/attacks/%s/%s\.rss' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
+    ('/feeds/places\.xml', rssfeeds.CountryFeed),
+    ('/feeds/places/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
+    ('/feeds/attacks/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
+    ('/feeds/attacks/%s/%s\.xml' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
 
-    ('/gsaf/feeds/places\.rss', rssfeeds.CountryFeed),
-    ('/gsaf/feeds/places/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
-    ('/gsaf/feeds/attacks/%s\.rss' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
-    ('/gsaf/feeds/attacks/%s/%s\.rss' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
+    ('/gsaf/feeds/places\.xml', rssfeeds.CountryFeed),
+    ('/gsaf/feeds/places/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
+    ('/gsaf/feeds/attacks/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
+    ('/gsaf/feeds/attacks/%s/%s\.xml' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
 
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
