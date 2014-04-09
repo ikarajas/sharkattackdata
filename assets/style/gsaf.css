@@ -67,3 +67,9 @@ h3 {
 ol.breadcrumb {
     font-size: 14px;
 }
+
+div.header {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    text-align: right;
+}
