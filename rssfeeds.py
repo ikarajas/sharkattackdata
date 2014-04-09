@@ -34,58 +34,55 @@ class RssFeed(webapp2.RequestHandler):
         self._areaRepository = AreaRepository()
         self._baseUrl = "%s://%s/%s" % (self._urlScheme, self._hostName, "gsaf/" if isGsaf else "")
         self._feedsBaseUrl = "%sfeeds/" % self._baseUrl
+
     def _configure(self, feedTitle, feedLink, feedDescription):
         self._feedTitle = feedTitle
         self._feedLink = feedLink
         self._feedDescription = feedDescription
 
+    def _makeElementWithTextNode(self, tagName, text):
+        elem = Element(tagName)
+        textNode = Text()
+        textNode.data = text
+        elem.appendChild(textNode)
+        return elem
+        
+    def _appendElementWithTextNode(self, appendTo, tagName, text):
+        appendTo.appendChild(self._makeElementWithTextNode(tagName, text))
+
     def get(self, *args):
         self.response.headers['Content-Type'] = "application/rss+xml"
-        rssItems = []
-        for item in self.getItems(*args):
+
+        items = self.getItems(*args)
+
+        itemElems = []
+        for item in items:
             itemElem = Element("item")
-
-            titleElem = Element("title")
-            titleText = Text()
-            titleText.data = item.title
-            titleElem.appendChild(titleText)
-            itemElem.appendChild(titleElem)
-            linkElem = Element("link")
-            linkText = Text()
-            linkText.data = item.link
-            linkElem.appendChild(linkText)
-            itemElem.appendChild(linkElem)
-            descriptionElem = Element("description")
-            descriptionText = Text()
-            descriptionText.data = item.description
-            descriptionElem.appendChild(descriptionText)
-            itemElem.appendChild(descriptionElem)
+            self._appendElementWithTextNode(itemElem, "title", item.title)
+            self._appendElementWithTextNode(itemElem, "link", item.link)
+            self._appendElementWithTextNode(itemElem, "description", item.description)
+            self._appendElementWithTextNode(itemElem, "guid", item.link)
             if item.subPlaceFeedLink:
-                subPlaceFeedLinkElem = Element("sharkattackdata:subPlaceFeedLink")
-                subPlaceFeedLinkText = Text()
-                subPlaceFeedLinkText.data = item.subPlaceFeedLink
-                subPlaceFeedLinkElem.appendChild(subPlaceFeedLinkText)
-                itemElem.appendChild(subPlaceFeedLinkElem)
+                self._appendElementWithTextNode(itemElem, "sharkattackdata:subPlaceFeedLink", item.subPlaceFeedLink)
             if item.attackFeedLink:
-                attackFeedLinkElem = Element("sharkattackdata:attackFeedLink")
-                attackFeedLinkText = Text()
-                attackFeedLinkText.data = item.attackFeedLink
-                attackFeedLinkElem.appendChild(attackFeedLinkText)
-                itemElem.appendChild(attackFeedLinkElem)
+                self._appendElementWithTextNode(itemElem, "sharkattackdata:attackFeedLink", item.attackFeedLink)
 
-            text = itemElem.toxml()
-            rssItems.append(text)
+            itemElems.append(itemElem)
+
+        # Need to make channel element after the generator returned by getItems has been iterated.
+        channelElem = Element("channel")
+        self._appendElementWithTextNode(channelElem, "title", self._feedTitle)
+        self._appendElementWithTextNode(channelElem, "link", self._feedLink)
+        self._appendElementWithTextNode(channelElem, "description", self._feedDescription)
+
+        for itemElem in itemElems:
+            channelElem.appendChild(itemElem)
 
         responseText = """<?xml version="1.0"?>
 <rss version="2.0" xmlns:sharkattackdata="http://sharkattackdata.com/rss/modules/1.0/">
-    <channel>
-        <title>%s</title>
-        <link>%s</link>
-        <description>%s</description>
-    </channel>
-    %s
+%s
 </rss>
-""" % (self._feedTitle, self._feedLink, self._feedDescription, "".join(rssItems))
+""" % (channelElem.toprettyxml())
         self.response.out.write(responseText)
 
 class CountryFeed(RssFeed):
