@@ -26,6 +26,7 @@ indexes:
   - name: date
   - name: activity
   - name: area
+  - name: date_is_approximate
   - name: date_orig
   - name: date_userfriendly
   - name: fatal

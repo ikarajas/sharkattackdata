@@ -72,8 +72,8 @@ class SharkAttackRepository:
     def __getDescendantAttackDataInternal(self, key):
         query = SharkAttack.query(ancestor=key).order(SharkAttack.date)
         attacks = query.fetch(
-            projection=[SharkAttack.date, SharkAttack.date_orig, SharkAttack.date_userfriendly, SharkAttack.area,
-                        SharkAttack.location,SharkAttack.activity, SharkAttack.fatal, SharkAttack.provoked])
+            projection=[SharkAttack.date, SharkAttack.date_orig, SharkAttack.date_userfriendly, SharkAttack.date_is_approximate,
+                        SharkAttack.area, SharkAttack.location,SharkAttack.activity, SharkAttack.fatal, SharkAttack.provoked])
         summary = self.writeAttacksToCache(key, attacks)
         return summary, attacks
 
