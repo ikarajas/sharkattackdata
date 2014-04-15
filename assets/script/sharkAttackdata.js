@@ -63,7 +63,39 @@
 	}
     });
 
+    $.widget("SharkAttackData.PlaceWidget", {
+	_create: function() {
+	    var widget = this;
+	    widget.data = this.element.data();
+	    widget.vm = {
+		attacks: ko.observableArray()
+	    };
+
+	    ko.applyBindings(widget.vm, widget.element[0]);
+	    widget._getAttacks();
+	},
+	
+	_getAttacks: function() {
+	    var widget = this;
+	    $.ajax({
+		url: "/api/attacks",
+		type: "GET",
+		data: { country: widget.data.country, area: widget.data.area },
+		success: function(result) {
+		    widget.vm.attacks.push.apply(widget.vm.attacks, $.map(result, function(value, index) {
+			return $.extend(value, {
+			    unprovokedUserFriendly: value.unprovoked ? "Unprovoked" : "Provoked",
+			    fatalUserFriendly: value.fatal ? "Fatal" : "Non-fatal"
+			});
+		    }));
+		    widget.element.find(".please-wait").removeClass("please-wait");
+		}
+	    });
+	}
+    });
+
     $(document).ready(function() {
 	$(".attack-place-summary").AttackPlaceSummary();
+	$(".place-widget").PlaceWidget();
     });
 })(jQuery);

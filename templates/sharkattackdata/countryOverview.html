@@ -1,25 +1,26 @@
 {% autoescape true %}
 
-<h2>Shark attack data for {{ country.name }}</h2>
+<div class="place-widget" data-country="{{ country.urlPart }}">
+  <h2>Shark attack data for {{ country.name }}</h2>
 
-<div class="col-sm-6">
-  <h3>Attacks by area</h3>
-  <ul class="nav">
-    {% for area in areas %}
-    <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
-    {% endfor %}
-  </ul>
+  <div class="col-sm-6">
+    <h3>Attacks by area</h3>
+    <ul class="nav">
+      {% for area in areas %}
+      <li><a href="/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
+      {% endfor %}
+    </ul>
 
-  <h3>All Attacks</h3>
-  <ul class="nav">
-    <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
-  </ul>
+    <h3>All Attacks</h3>
+    <ul class="nav">
+      <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
+    </ul>
+  </div>
+
+  <div class="col-sm-6">
+    <h3>Summary</h3>
+    {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+  </div>
 </div>
-
-<div class="col-sm-6">
-  <h3>Summary</h3>
-  {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
-</div>
-
 {% endautoescape %}
 

@@ -1,6 +1,15 @@
-table.incident-list th.date {
+.incident-list-container table.incident-list td.approx-date {
+    font-style: italic;
+}
+.incident-list-container table.incident-list th.date {
     width: 8em;
 }
-table.incident-list th.fatal {
+.incident-list-container table.incident-list th.fatal {
     width: 5em;
+}
+.please-wait{
+    height: 10em;
+    background-image:url('/assets/images/loadinfo_sharkattackdata.net.gif');
+    background-repeat:no-repeat;
+    background-position:center; 
 }

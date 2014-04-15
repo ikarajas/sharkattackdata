@@ -1,12 +1,14 @@
 {% autoescape true %}
 
-<h2>Shark attack data for {{ area.name }}, {{ country.name }}</h2>
+<div class="place-widget" data-country="{{ country.urlPart }}" data-area="{{ area.urlPart }}">
+  <h2>Shark attack data for {{ area.name }}, {{ country.name }}</h2>
 
-{% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+  {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
 
-<h3>Attacks</h3>
+  <h3>Attacks</h3>
 
-{% include "/templates/sharkattackdata/incidentListTable.html" %}
+  {% include "/templates/sharkattackdata/incidentListTable.html" %}
+</div>
 
 {% endautoescape %}
 

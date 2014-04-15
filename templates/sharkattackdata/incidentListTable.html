@@ -1,6 +1,5 @@
-
-<table class="table table-striped incident-list">
-  <tbody>
+<div class="incident-list-container please-wait">
+  <table class="table table-striped incident-list">
     <thead>
       <th class="date">Date</th>
       {% if not area %}
@@ -12,18 +11,16 @@
       <th class="fatal">Fatal?</th>
       <th class="details"></th>
     </thead>
-    {% for attack in attacks %}
-    <tr>
-      <td>{{ attack.date_userfriendly }}</td>
+    <tbody data-bind="foreach: attacks">
+      <td data-bind="text: dateUserFriendly, css: { 'approx-date': dateIsApproximate }">
       {% if not area %}
-      <td>{{ attack.area }}</td>
+      <td data-bind="text: area"></td>
       {% endif %}
-      <td>{{ attack.location }}</td>
-      <td>{{ attack.activity }}</td>
-      <td>{{ attack.unprovokedUserFriendly }}</td>
-      <td>{{ attack.fatalUserFriendly }}</td>
-      <td><a href="/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+      <td data-bind="text: location"></td>
+      <td data-bind="text: activity"></td>
+      <td data-bind="text: unprovokedUserFriendly"></td>
+      <td data-bind="text: fatalUserFriendly"></td>
+      <td><a href="#">Details</a></td>
+    </tbody>
+  </table>
+</div>
