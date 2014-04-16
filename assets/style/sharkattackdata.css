@@ -20,3 +20,11 @@ table.place-summary th {
 div.attack-place-summary div.charts div {
     float: left;
 }
+div.attack-place-summary div.charts .pie-chart {
+    width: 370px;
+    height: 200px;
+}
+
+.please-wait{
+    background-image:url('/assets/images/loadinfo_sharkattackdata.net.gif');
+}

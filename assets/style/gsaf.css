@@ -73,3 +73,6 @@ div.header {
     margin-bottom: 1em;
     text-align: right;
 }
+.please-wait{
+    background-image:url('/assets/images/loadinfo_gsaf.net.gif');
+}

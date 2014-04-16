@@ -1,26 +1,26 @@
-<div class="attack-place-summary"
-     data-total-count="{{ attackPlaceSummary.totalCount }}"
-     data-fatal-count="{{ attackPlaceSummary.fatalCount }}"
-     data-unprovoked-count="{{ attackPlaceSummary.unprovokedCount }}"
-     data-fatal-and-unprovoked-count="{{ attackPlaceSummary.fatalAndUnprovokedCount }}">
+<div class="attack-place-summary">
   <table class="table table-striped place-summary">
     <tr>
       <th>Total</th>
-      <td>{{ attackPlaceSummary.totalCount }}</td>
+      <td data-bind="text: summaryStats.totalCount"></td>
     </tr>
     <tr>
       <th>Fatal</th>
-      <td>{{ attackPlaceSummary.fatalCount }}</td>
+      <td data-bind="text: summaryStats.fatalCount"></td>
     </tr>
     <tr>
       <th>Unprovoked</th>
-      <td>{{ attackPlaceSummary.unprovokedCount }}</td>
+      <td data-bind="text: summaryStats.unprovokedCount"></td>
     </tr>
     <tr>
       <th>Fatal and unprovoked</th>
-      <td>{{ attackPlaceSummary.fatalAndUnprovokedCount }}</td>
+      <td data-bind="text: summaryStats.fatalAndUnprovokedCount"></td>
   </tr>
   </table>
 
-  <div class="charts clearfix"></div>
+  <div class="charts clearfix">
+    <div class="pie-chart please-wait" id="fatal"></div>
+    <div class="pie-chart please-wait" id="unprovoked"></div>
+    <div class="pie-chart please-wait" id="fatal-and-unprovoked"></div>
+  </div>
 </div>

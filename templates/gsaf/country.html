@@ -1,32 +1,15 @@
 {% autoescape true %}
 
-<h3>Attacks by area</h3>
-<ul>
-  {% for area in areas %}
-  <li><a href="/gsaf/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
-  {% endfor %}
-</ul>
-
-<h3>Attacks</h3>
-<table class="table table-striped incident-list">
-  <tbody>
-    <thead>
-      <th class="date">Date</th>
-      <th>Area</th>
-      <th>Location</th>
-      <th>Activity</th>
-      <th></th>
-    </thead>
-    {% for attack in attacks %}
-    <tr>
-      <td>{{ attack.date_userfriendly }}</td>
-      <td>{{ attack.area }}</td>
-      <td>{{ attack.location }}</td>
-      <td>{{ attack.activity }}</td>
-      <td><a href="/gsaf/attack/{{ attack.key.parent().parent().id() }}/{{ attack.key.parent().id() }}/{{ attack.key.id() }}">Details</a></td>
-    </tr>
+<div class="place-widget" data-country="{{ country.urlPart }}">
+  <h3>Attacks by area</h3>
+  <ul>
+    {% for area in areas %}
+    <li><a href="/gsaf/place/{{ country.urlPart }}/{{ area.urlPart }}">{{ area.name }}</a></li>
     {% endfor %}
-  </tbody>
-</table>
+  </ul>
+
+  <h3>Attacks</h3>
+  {% include "/templates/common/incidentListContainer.html" %}
+</div>
 {% endautoescape %}
 

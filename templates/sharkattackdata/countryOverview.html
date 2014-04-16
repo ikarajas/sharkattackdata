@@ -13,7 +13,7 @@
 
     <h3>All Attacks</h3>
     <ul class="nav">
-      <li><a href="/place/{{ country.urlPart }}">View all {{ attackPlaceSummary.totalCount }} attacks in {{ country.name }}</a></li>
+      <li><a href="/place/{{ country.urlPart }}">View all <span data-bind="text: summaryStats.totalCount"></span> attacks in {{ country.name }}</a></li>
     </ul>
   </div>
 
