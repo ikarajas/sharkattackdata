@@ -73,6 +73,23 @@ div.header {
     margin-bottom: 1em;
     text-align: right;
 }
-.please-wait{
+
+.incident-list-container table.incident-list th.fatal {
+    width: 6em !important;
+}
+
+.please-wait {
     background-image:url('/assets/images/loadinfo_gsaf.net.gif');
+}
+
+ol.breadcrumb {
+    font-size: 11px;
+}
+
+.btn {
+    font-size: 11px;
+}
+
+.dropdown-menu {
+    font-size: 11px;
 }
