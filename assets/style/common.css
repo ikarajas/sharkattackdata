@@ -1,3 +1,9 @@
+.incident-list-container .filter-state-summary {
+    font-style: italic;
+}
+.incident-list-container .filter-buttons button {
+    width: 15em;
+}
 .incident-list-container table.incident-list td.approx-date {
     font-style: italic;
 }

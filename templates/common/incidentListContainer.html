@@ -1,4 +1,29 @@
 <div class="incident-list-container please-wait">
+  <div>
+    <div class="filter-state-summary pull-left" data-bind="text: filterStateSummary"></div>
+    <div class="filter-buttons pull-right">
+      <div class="btn-group filter-on-fatal">
+	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+	  <span data-bind="text: filterDropdownFatalState"></span> <span class="caret"></span>
+	</button>
+	<ul class="dropdown-menu" role="menu">
+	  <li><a href="#" id="fatal-only" data-bind="text: filterStatuses_fatal.fatal_only"></a></li>
+	  <li><a href="#" id="non-fatal-only" data-bind="text: filterStatuses_fatal.non_fatal_only"></a></li>
+	  <li><a href="#" id="fatal-and-non-fatal" data-bind="text: filterStatuses_fatal.fatal_and_non_fatal"></a></li>
+	</ul>
+      </div>
+      <div class="btn-group filter-on-provoked">
+	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+	  <span data-bind="text: filterDropdownProvokedState"></span> <span class="caret"></span>
+	</button>
+	<ul class="dropdown-menu" role="menu">
+	  <li><a href="#" id="provoked-only" data-bind="text: filterStatuses_provoked.provoked_only"></a></li>
+	  <li><a href="#" id="unprovoked-only" data-bind="text: filterStatuses_provoked.unprovoked_only"></a></li>
+	  <li><a href="#" id="provoked-and-unprovoked" data-bind="text: filterStatuses_provoked.provoked_and_unprovoked"></a></li>
+	</ul>
+      </div>
+    </div>
+  </div>
   <table class="table table-striped incident-list">
     <thead>
       <th class="date">Date</th>
@@ -11,9 +36,9 @@
       <th class="fatal">Fatal?</th>
       <th class="details"></th>
     </thead>
-    <tbody data-bind="foreach: attacks">
+    <tbody data-bind="foreach: attacksFiltered">
       <td data-bind="text: dateUserFriendly, css: { 'approx-date': dateIsApproximate }">
-      {% if not area %}
+	{% if not area %}
       <td data-bind="text: area"></td>
       {% endif %}
       <td data-bind="text: location"></td>
@@ -23,4 +48,7 @@
       <td><a href="#" data-bind="attr: { href: detailsUrl, title: 'View incident details...' }">Details</a></td>
     </tbody>
   </table>
+  <!-- ko if: noAttacksMatchFilterSettings -->
+  <div class="text-center">No incidents match the current filter settings.</div>
+  <!-- /ko -->
 </div>
