@@ -15,17 +15,6 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'],
     autoescape=True)
 
-
-
-class LocationSummary:
-    def __init__(self, countryOrArea, attacks):
-        self._totalCount = len(attacks)
-        self._countryName = countryOrArea.name
-        self._fatalCount = len([y for y in attacks if y.fatal])
-        self._unprovokedCount = len([y for y in attacks if not y.provoked])
-        self._fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
-
-
 class Helper():
     def __init__(self):
         pass
@@ -48,9 +37,6 @@ class Helper():
     def getCountriesAsDict(self):
         displayCountries = self.getCountries()
         return dict([[self.getNormalisedCountryName(y.name), y] for y in displayCountries])
-
-    def getCountryAttacksPartKey(self, displayCountry, part):
-        return "attacks_%s_part_%s" % (displayCountry.urlPart, part)
 
     def getUrlForNode(self, site, node):
         path = "/"
