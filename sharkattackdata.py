@@ -32,7 +32,7 @@ class Helper():
         return countries
 
     def getNormalisedCountryName(self, countryName):
-        return StringUtils.normaliseName(countryName, toLower=True, spacesToUnderscore=True)
+        return StringUtils.normalisePlaceName(countryName)
 
     def getCountriesAsDict(self):
         displayCountries = self.getCountries()
@@ -290,12 +290,12 @@ class PostSharkAttacks(JsonServiceHandler):
     def handle(self, attacks):
         attacksToStore = []
         for attackrow in attacks:
-            countryId = StringUtils.normaliseName(attackrow[2], toLower=True, spacesToUnderscore=True)
-            areaId = StringUtils.normaliseName(attackrow[3], toLower=True, spacesToUnderscore=True)
+            countryId = StringUtils.normalisePlaceName(attackrow[2])
+            areaId = StringUtils.normalisePlaceName(attackrow[3])
             if areaId == "":
                 # E.g. if the area only contains unicode characters.
                 attackrow[3] = "Area unknown"
-                areaId = StringUtils.normaliseName(attackrow[3], toLower=True, spacesToUnderscore=True)
+                areaId = StringUtils.normalisePlaceName(attackrow[3])
             newCountry = self.getCountry(countryId, attackrow[2])
             newArea = self.getArea(newCountry, areaId, attackrow[3])
 

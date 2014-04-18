@@ -2,6 +2,10 @@ import re, unittest
 
 class StringUtils:
     @staticmethod
+    def normalisePlaceName(name):
+        return StringUtils.normaliseName(name, toLower=True, spacesToUnderscore=True)
+
+    @staticmethod
     def normaliseName(name, toLower=False, spacesToUnderscore=False, spacesToDash=False, dashesToUnderscore=False):
         if spacesToUnderscore and spacesToDash:
             raise ValueError("Kwargs: spacesToUnderscore and spacesToDash cannot both be true.")
