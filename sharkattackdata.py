@@ -7,6 +7,7 @@ from google.appengine.ext import ndb
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories import SharkAttackRepository
+import sitemap
 import rssfeeds
 import api
 
@@ -370,6 +371,8 @@ application = webapp2.WSGIApplication([
     ('/gsaf/feeds/places/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.AreaFeed),
     ('/gsaf/feeds/attacks/%s\.xml' % (Constants.UrlPartCountryRegex), rssfeeds.SharkAttackFeed),
     ('/gsaf/feeds/attacks/%s/%s\.xml' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), rssfeeds.SharkAttackFeed),
+
+    ('/sitemap.xml', sitemap.SiteMap),
 
     ('/api/attacks', api.Attacks),
 

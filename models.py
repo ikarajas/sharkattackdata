@@ -38,7 +38,7 @@ class SharkAttack(ndb.Model):
     date_is_approximate = ndb.BooleanProperty()
     fatal = ndb.BooleanProperty()
     provoked = ndb.BooleanProperty()
-    identifier = ndb.StringProperty(indexed=True)
+    identifier = ndb.StringProperty(indexed=True) #TODO: get rid of this
 
     unprovoked = ndb.ComputedProperty(lambda sa: False if sa.provoked else True)
     unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Unprovoked" if not sa.provoked else "Provoked")

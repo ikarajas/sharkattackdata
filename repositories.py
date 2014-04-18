@@ -104,7 +104,13 @@ class AreaRepository:
     def getArea(self, countryId, areaId):
         return ndb.Key("Country", countryId, "Area", areaId).get()
 
+    def getAreasOfCountryForId(self, countryId):
+        query = Area.query(ancestor=ndb.Key("Country", countryId)).order(Area.name)
+        areas = query.fetch()
+        return areas
+
     def getAreasOfCountry(self, country):
+        #Coupling of method interface with NDB-based model... remove.
         if not country.key.kind() == "Country":
             raise ValueError("key must refer to an instance of Country.")
         query = Area.query(ancestor=country.key).order(Area.name)
