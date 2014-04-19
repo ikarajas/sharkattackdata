@@ -72,7 +72,7 @@ class SiteMap(webapp2.RequestHandler):
         return "/place/%s/%s" % (countryId, areaId)
 
     def __getAttackUrl(self, countryId, areaId, attackId):
-        return "/place/%s/%s/%s" % (countryId, areaId, attackId)
+        return "/attack/%s/%s/%s" % (countryId, areaId, attackId)
 
     def getXml(self):
         self._smg.addUrl(SiteMapUrl("/", None, "weekly", 1.0))
