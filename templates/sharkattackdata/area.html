@@ -3,11 +3,25 @@
 <div class="place-widget" data-country="{{ country.urlPart }}" data-area="{{ area.urlPart }}">
   <h2>Shark attack data for {{ area.name }}, {{ country.name }}</h2>
 
-  {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+  <div class="row">
+    <div class="col-sm-12">
+      <h4>Timeline of unprovoked incidents since 1900</h4>
+      <div class="main-timeline-graph please-wait" id="timeline"></div>
+    </div>
+  </div>
 
-  <h3>Attacks</h3>
+  <div class="row">
+    <div class="col-sm-12">
+      {% include "/templates/sharkattackdata/placeSummaryTable.html" %}
+    </div>
+  </div>
 
-  {% include "/templates/common/incidentListContainer.html" %}
+  <div class="row">
+    <div class="col-sm-12">
+      <h3>Attacks</h3>
+      {% include "/templates/common/incidentListContainer.html" %}
+    </div>
+  </div>
 </div>
 
 {% endautoescape %}

@@ -1,10 +1,38 @@
 (function($) {
+    Utils = {
+	range: function(start, end) {
+	    retval = [];
+	    for (var i = start; i <= end; i++) {
+		retval.push(i);
+	    }
+	    return retval;
+	},
+
+	getAttackCountsForYear: function(year, attacks) {
+	    yearSet = $.grep(attacks, function(a, i) { return a.date !== null && a.date.getFullYear() === year; });
+	    return {
+		total: yearSet.length,
+		fatal: $.grep(yearSet, function(a, i) { return a.fatal; }).length,
+		unprovoked: $.grep(yearSet, function(a, i) { return a.unprovoked; }).length,
+		unprovokedAndNonFatal: $.grep(yearSet, function(a, i) { return !a.fatal && a.unprovoked; }).length,
+		fatalAndUnprovoked: $.grep(yearSet, function(a, i) { return a.fatal && a.unprovoked; }).length
+	    };
+	}
+    };
+
     $.widget("SharkAttackData.PlaceWidget", {
 	_create: function() {
 	    var widget = this;
 	    widget.data = this.element.data();
-	    widget.pieChartWidth = 370;
-	    widget.pieChartHeight = 200;
+	    widget.chartBaseTextStyle = {
+		color: "white",
+		fontSize: "12",
+		fontName: "Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+	    };
+	    widget.colorNeutral = "#81A192";
+	    widget.colorFatal = "#D10000";
+	    widget.pieChartWidth = 333;
+	    widget.pieChartHeight = 150;
 	    widget.loadingMessage = "Loading...";
 
 	    function AttackPlaceSummaryViewModel() {
@@ -25,6 +53,12 @@
 		self.attacks = ko.observableArray();
 		self.attacksLoaded = ko.observable(false);
 		
+		self.attackStatsByYear = ko.computed(function() {
+		    return $.map(Utils.range(1900, (new Date()).getFullYear()), function(value, index) {
+			return [[ value, Utils.getAttackCountsForYear(value, self.attacks()) ]];
+		    });
+		});
+
 		self.attacksFiltered = ko.computed(function() {
 		    return $.grep(self.attacks(), function(a, i) {
 			fatalCheckPass = true;
@@ -145,6 +179,34 @@
 		    ['Other', widget.vm.summaryStats.totalCount() - widget.vm.summaryStats.fatalAndUnprovokedCount()]
 		]
 	    );
+	    
+	    widget._drawTimelineChart("#timeline");
+	},
+
+	
+	_drawTimelineChart: function(elemSelector) {
+	    var widget = this;
+	    var tableDataRaw = $.map(widget.vm.attackStatsByYear(), function(value, index) {
+		return [[ value[0].toString(), value[1].fatalAndUnprovoked, value[1].unprovokedAndNonFatal ]];
+	    });
+	    tableDataRaw.unshift(["Year", "Fatal", "Non-fatal"])
+
+            var data = google.visualization.arrayToDataTable(tableDataRaw);
+	    
+	    // Note: use vAxis.gridLines.count and vAxis.format...
+            var options = { height: 200,
+			    titleTextStyle: widget.chartBaseTextStyle,
+			    legend: { textStyle: widget.chartBaseTextStyle },
+			    vAxis: { textStyle: widget.chartBaseTextStyle, baselineColor: "#fff", gridlines: { color: "#777"} },
+			    hAxis: { textStyle: widget.chartBaseTextStyle },
+			    fontName: widget.chartBaseTextStyle.fontName,
+			    backgroundColor: { fill: "none" },
+			    isStacked: true,
+			    colors: [ widget.colorFatal, widget.colorNeutral ]
+			  };
+	    
+            var chart = new google.visualization.ColumnChart($(elemSelector)[0]);
+            chart.draw(data, options);
 	},
 
 	_drawPieChart: function(title, elemSelector, columns, rows) {
@@ -156,18 +218,21 @@
 	    });
 	    dt.addRows(rows);
 	    
-	    var textStyle = {color: "white", fontSize: "12", fontName: "Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif"};
-	    var options = {title: title,
-			   width: widget.pieChartWidth,
-			   height: widget.pieChartHeight,
-			   titleTextStyle: textStyle,
-			   legend: {textStyle: textStyle},
-			   tooltip: {textStyle: { color: "black", fontSize: textStyle.fontSize, fontName: textStyle.fontName }},
-			   backgroundColor: { fill: "none" },
-			   slices: {
-			       0: {color: "red"},
-			       1: {color: "gray"},
-			   }
+	    var options = { title: title,
+			    width: widget.pieChartWidth,
+			    height: widget.pieChartHeight,
+			    titleTextStyle: widget.chartBaseTextStyle,
+			    legend: { textStyle: widget.chartBaseTextStyle },
+			    tooltip: {textStyle: {
+				color: "black",
+				fontSize: widget.chartBaseTextStyle.fontSize,
+				fontName: widget.chartBaseTextStyle.fontName
+			    }},
+			    backgroundColor: { fill: "none" },
+			    slices: {
+				0: { color: widget.colorFatal },
+				1: { color: widget.colorNeutral },
+			    }
 			  };
 	    
 	    var $charts = widget.element.find(".charts");
@@ -186,6 +251,7 @@
 		success: function(result) {
 		    widget.vm.attacks.push.apply(widget.vm.attacks, $.map(result, function(value, index) {
 			return $.extend(value, {
+			    date: (value.date === null) ? null : new Date(value.date),
 			    provoked: !value.unprovoked,
 			    unprovokedUserFriendly: value.unprovoked ? "Unprovoked" : "Provoked",
 			    fatalUserFriendly: value.fatal ? "Fatal" : "Non-fatal",

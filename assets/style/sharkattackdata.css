@@ -20,8 +20,14 @@ table.place-summary th {
 div.attack-place-summary div.charts div {
     float: left;
 }
+
+div.main-timeline-graph {
+    width: 100%;
+    height: 200px;
+}
+
 div.attack-place-summary div.charts .pie-chart {
-    width: 370px;
+    width: 333px;
     height: 200px;
 }
 
