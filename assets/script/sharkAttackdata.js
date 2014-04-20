@@ -17,6 +17,24 @@
 		unprovokedAndNonFatal: $.grep(yearSet, function(a, i) { return !a.fatal && a.unprovoked; }).length,
 		fatalAndUnprovoked: $.grep(yearSet, function(a, i) { return a.fatal && a.unprovoked; }).length
 	    };
+	},
+
+	calculateMovingAverageForYear: function(year, period, summaryData, getDataPoint) {
+	    // summaryData format:
+	    // {
+	    // 	year: { prop1: point1, prop2: point2, propN: pointN, ... },
+	    // 	yearN: { prop1: point1, prop2: point2, propN: pointN, ... },
+	    // 	...
+	    // }
+	    
+	    var startYear = year - period;
+	    var endYear = year;
+	    var sum = 0;
+	    for (var i = startYear; i < endYear; i++) {
+		sum += getDataPoint(summaryData[i]);
+	    }
+	    var retval = sum / period;
+	    return retval;
 	}
     };
 
@@ -29,8 +47,10 @@
 		fontSize: "12",
 		fontName: "Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif"
 	    };
-	    widget.colorNeutral = "#81A192";
-	    widget.colorFatal = "#D10000";
+	    widget.colorNeutral = "#5C8270";
+	    widget.colorNeutralContrast = "#C2EDD9";
+	    widget.colorFatal = "#B50000";
+	    widget.colorFatalContrast = "#ED0000";
 	    widget.pieChartWidth = 333;
 	    widget.pieChartHeight = 150;
 	    widget.loadingMessage = "Loading...";
@@ -57,6 +77,40 @@
 		    return $.map(Utils.range(1900, (new Date()).getFullYear()), function(value, index) {
 			return [[ value, Utils.getAttackCountsForYear(value, self.attacks()) ]];
 		    });
+		});
+
+		self.attackStatsByYearDict = ko.computed(function() {
+		    var retval = {};
+		    $.each(self.attackStatsByYear(), function(index, value) {
+			retval[value[0]] = value[1];
+		    });
+		    return retval;
+		});
+
+		self.attackStatsMovingAverageByYearDict = ko.computed(function() {
+		    if (self.attacks().length == 0) {
+			return [];
+		    }
+
+		    var period = 10;
+		    var startDate = 1900 + period;
+		    var endDate = (new Date()).getFullYear();
+		    var asArray = $.map(Utils.range(startDate, endDate), function(value, index) {
+			return [[
+			    value,
+			    {
+				unprovoked: Utils.calculateMovingAverageForYear(value, period, self.attackStatsByYearDict(),
+										function(yearSummary) { return yearSummary.unprovoked; }),
+				fatal: Utils.calculateMovingAverageForYear(value, period, self.attackStatsByYearDict(),
+									   function(yearSummary) { return yearSummary.fatal; })
+			    }
+			]];
+		    });
+		    var retval = {};
+		    $.each(asArray, function(index, value) {
+			retval[value[0]] = value[1];
+		    });
+		    return retval;
 		});
 
 		self.attacksFiltered = ko.computed(function() {
@@ -202,25 +256,35 @@
 	_drawTimelineChart: function() {
 	    var widget = this;
 	    var tableDataRaw = $.map(widget.vm.attackStatsByYear(), function(value, index) {
-		return [[ value[0].toString(), value[1].fatalAndUnprovoked, value[1].unprovokedAndNonFatal ]];
+		var year = value[0];
+		var movingAverages = widget.vm.attackStatsMovingAverageByYearDict()[year];
+		var fatalMovingAverage = movingAverages === undefined ? 0 : movingAverages.fatal;
+		var unprovokedMovingAverage = movingAverages === undefined ? 0 : movingAverages.unprovoked;
+		retval =  [[
+		    year.toString(),
+		    value[1].fatalAndUnprovoked, value[1].unprovokedAndNonFatal,
+		    fatalMovingAverage, unprovokedMovingAverage
+		]];
+		return retval;
 	    });
-	    tableDataRaw.unshift(["Year", "Fatal", "Non-fatal"])
+	    tableDataRaw.unshift(["Year", "Fatal", "Non-fatal", "Fatal (10 year moving average)", "All unprovoked (10 year moving average)"])
 
             var data = google.visualization.arrayToDataTable(tableDataRaw);
 	    
 	    // Note: use vAxis.gridLines.count and vAxis.format...
-            var options = { height: 200,
-			    titleTextStyle: widget.chartBaseTextStyle,
+            var options = { titleTextStyle: widget.chartBaseTextStyle,
 			    legend: { textStyle: widget.chartBaseTextStyle },
 			    vAxis: { textStyle: widget.chartBaseTextStyle, baselineColor: "#fff", gridlines: { color: "#777"} },
 			    hAxis: { textStyle: widget.chartBaseTextStyle },
 			    fontName: widget.chartBaseTextStyle.fontName,
 			    backgroundColor: { fill: "none" },
+			    seriesType: "bars",
 			    isStacked: true,
-			    colors: [ widget.colorFatal, widget.colorNeutral ]
+			    series: { 2: { type: "line" }, 3: { type: "line" } },
+			    colors: [ widget.colorFatal, widget.colorNeutral, widget.colorFatalContrast, widget.colorNeutralContrast ]
 			  };
 	    
-            var chart = new google.visualization.ColumnChart($("#timeline")[0]);
+            var chart = new google.visualization.ComboChart($("#timeline")[0]);
             chart.draw(data, options);
 	},
 
