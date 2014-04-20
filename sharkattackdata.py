@@ -328,6 +328,10 @@ class PostSharkAttacks(JsonServiceHandler):
         memcache.add("areaDict", self._areas)
 
 
+class FlushMemcache(webapp2.RequestHandler):
+    def get(self):
+        memcache.flush_all()
+
 class Authenticate(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -378,5 +382,6 @@ application = webapp2.WSGIApplication([
 
     ('/serviceops/post_sharkattacks', PostSharkAttacks),
     ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
+    ('/serviceops/flush_memcache', FlushMemcache),
     ('/serviceops/authenticate', Authenticate)
     ], debug=debug)
