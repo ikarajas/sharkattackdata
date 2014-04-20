@@ -138,6 +138,16 @@
 		var newStateKey = event.target.id.replace(/-/g, "_");
 		widget.vm.filterDropdownProvokedState(widget.vm.filterStatuses_provoked[newStateKey]);
 	    });
+
+	    var resizeHandler = null;
+	    $(window).on('resize.placeWidget', function(e){
+		$(window).resize(function() {
+		    clearTimeout(resizeHandler);
+		    resizeHandler = setTimeout(function() {
+			widget._drawCharts();
+		    }, 250);
+		});
+	    });
 	},
 
 	_onAttacksLoaded: function() {
@@ -149,6 +159,12 @@
 	},
 	
 	_onChartApiLoaded: function() {
+	    var widget = this;
+	    widget._drawCharts();
+	},
+
+	
+	_drawCharts: function() {
 	    var widget = this;
 	    widget._drawPieChart(
 		"Fatal",
@@ -180,11 +196,10 @@
 		]
 	    );
 	    
-	    widget._drawTimelineChart("#timeline");
+	    widget._drawTimelineChart();
 	},
-
 	
-	_drawTimelineChart: function(elemSelector) {
+	_drawTimelineChart: function() {
 	    var widget = this;
 	    var tableDataRaw = $.map(widget.vm.attackStatsByYear(), function(value, index) {
 		return [[ value[0].toString(), value[1].fatalAndUnprovoked, value[1].unprovokedAndNonFatal ]];
@@ -205,12 +220,16 @@
 			    colors: [ widget.colorFatal, widget.colorNeutral ]
 			  };
 	    
-            var chart = new google.visualization.ColumnChart($(elemSelector)[0]);
+            var chart = new google.visualization.ColumnChart($("#timeline")[0]);
             chart.draw(data, options);
 	},
 
 	_drawPieChart: function(title, elemSelector, columns, rows) {
 	    var widget = this;
+
+	    var $charts = widget.element.find(".charts");
+	    var $chartElem = $charts.find(elemSelector);
+
 	    var dt = new google.visualization.DataTable();
 	    
 	    $.each(columns, function(index, value) {
@@ -219,9 +238,8 @@
 	    dt.addRows(rows);
 	    
 	    var options = { title: title,
-			    width: widget.pieChartWidth,
-			    height: widget.pieChartHeight,
 			    titleTextStyle: widget.chartBaseTextStyle,
+			    chartArea: { left: 0 },
 			    legend: { textStyle: widget.chartBaseTextStyle },
 			    tooltip: {textStyle: {
 				color: "black",
@@ -235,8 +253,6 @@
 			    }
 			  };
 	    
-	    var $charts = widget.element.find(".charts");
-	    var $chartElem = $charts.find(elemSelector);
 	    var chart = new google.visualization.PieChart($chartElem[0]);
 	    chart.draw(dt, options);
 	    $chartElem.removeClass("please-wait");

@@ -27,8 +27,15 @@ div.main-timeline-graph {
 }
 
 div.attack-place-summary div.charts .pie-chart {
-    width: 333px;
     height: 200px;
+}
+
+.area-page div.charts .pie-chart {
+    width: 390px;
+}
+
+.country-overview-page div.charts .pie-chart {
+    width: 100%;
 }
 
 .please-wait{
