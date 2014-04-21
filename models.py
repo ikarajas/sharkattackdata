@@ -6,6 +6,21 @@ MonthsDict = {
     1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"
     }
 
+class PlaceSummary:
+    totalCount = None
+    fatalCount = None
+    unprovokedCount = None
+    fatalAndUnprovokedCount = None
+    def __init__(self, attacks):
+        self.totalCount = len(attacks)
+        self.fatalCount = len([y for y in attacks if y.fatal])
+        self.unprovokedCount = len([y for y in attacks if not y.provoked])
+        self.fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
+
+    def __repr__(self):
+        return "Total: %s, Fatal: %s, Unprovoked: %s, Fatal and Unprovoked: %s" % \
+            (self.totalCount, self.fatalCount, self.unprovokedCount, self.fatalAndUnprovokedCount)
+
 class SharkAttack(ndb.Model):
 
     def getUserFriendlyDate(sa):
@@ -38,7 +53,6 @@ class SharkAttack(ndb.Model):
     date_is_approximate = ndb.BooleanProperty()
     fatal = ndb.BooleanProperty()
     provoked = ndb.BooleanProperty()
-    identifier = ndb.StringProperty(indexed=True) #TODO: get rid of this
 
     unprovoked = ndb.ComputedProperty(lambda sa: False if sa.provoked else True)
     unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Unprovoked" if not sa.provoked else "Provoked")
@@ -47,6 +61,16 @@ class SharkAttack(ndb.Model):
 class Country(ndb.Model):
     name = ndb.StringProperty()
     urlPart = ndb.ComputedProperty(lambda c: c.key.id())
+    place_summary = ndb.PickleProperty()
+
+    #These have the potential to return incorrect data if place_summary is not updated.
+    count_total = ndb.ComputedProperty(lambda c: c.place_summary.totalCount)
+    count_fatal = ndb.ComputedProperty(lambda c: c.place_summary.fatalCount)
+    count_provoked = ndb.ComputedProperty(lambda c: c.place_summary.totalCount - c.place_summary.unprovokedCount)
+    count_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.unprovokedCount)
+    count_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.fatalAndUnprovokedCount)
+    count_non_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.unprovokedCount - c.place_summary.fatalAndUnprovokedCount)
+
 
     @staticmethod
     def forName(name):
@@ -75,3 +99,7 @@ class Area(ndb.Model):
 
     def getAttacks(self):
         return SharkAttack.query(ancestor=self.key).order(SharkAttack.date)
+
+class SingletonStore(ndb.Model):
+    data = ndb.PickleProperty()
+

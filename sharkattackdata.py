@@ -7,9 +7,8 @@ from google.appengine.ext import ndb
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories import SharkAttackRepository
-import sitemap
-import rssfeeds
-import api
+
+import sitemap, rssfeeds, api, tasks
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -129,7 +128,8 @@ class SharkAttacksByLocationPage(BasePage):
             {},
             subtemplate=self.resolveTemplatePath("places.html"),
             title="Shark Attacks by Location",
-            countries=sorted(self.helper.getCountries(), key=lambda c: c.name)
+            highest_total=sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)[0].count_total,
+            countries=sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)
             )
 
 class AttackPage(BasePage):
@@ -380,8 +380,9 @@ application = webapp2.WSGIApplication([
 
     ('/api/attacks', api.Attacks),
 
-    ('/serviceops/post_sharkattacks', PostSharkAttacks),
-    ('/serviceops/delete_sharkattacks', DeleteSharkAttacks),
-    ('/serviceops/flush_memcache', FlushMemcache),
+    ('/serviceops/generate-summaries', tasks.GenerateSummaries),
+    ('/serviceops/post-sharkattacks', PostSharkAttacks),
+    ('/serviceops/delete-sharkattacks', DeleteSharkAttacks),
+    ('/serviceops/flush-memcache', FlushMemcache),
     ('/serviceops/authenticate', Authenticate)
     ], debug=debug)

@@ -75,16 +75,25 @@ class CountryRepository:
     def getCountry(self, countryId):
         return self._countries[countryId]
 
+    def updatePlaceSummary(self, country, placeSummary):
+        country.place_summary = placeSummary
 
 class AreaRepository:
     def getArea(self, countryId, areaId):
         return CountryRepository()._CountryRepository__getCountriesDict()[countryId]._Country__areas[areaId]
 
-    def getAreasOfCountryForId(self, country):
-        return CountryRepository()._CountryRepository__getCountriesDict()[country]._Country__areas.values()
+    def getAreasOfCountryForId(self, countryId):
+        return CountryRepository()._CountryRepository__getCountriesDict()[countryId]._Country__areas.values()
     
 
 class SharkAttackRepository:
+    def getDescendantAttacksForCountry(self, countryId):
+        attacks = []
+        for area in AreaRepository().getAreasOfCountryForId(countryId):
+            key = ndb.Key("Country", countryId, "Area", area.urlPart)
+            attacks.extend(self.getDescendantAttacksForKey(key))
+        return attacks
+
     def getDescendantAttacksForKey(self, key):
         #Assumes that key defines an area...
         countryId = key.flat()[1]
@@ -97,6 +106,7 @@ if __name__ == "__main__":
     attackRepo = SharkAttackRepository()
     print countryRepo.getCountries()
     print countryRepo.getCountry("middle_earth").name
+    print attackRepo.getDescendantAttacksForCountry("elbonia")
     print attackRepo.getDescendantAttacksForKey(ndb.Key("Country", "elbonia", "Area", "qwerty"))
 
     print areaRepo.getArea("the_land_of_chocolate", "smarties_county").name

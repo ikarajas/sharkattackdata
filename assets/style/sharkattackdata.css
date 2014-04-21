@@ -41,3 +41,40 @@ div.attack-place-summary div.charts .pie-chart {
 .please-wait{
     background-image:url('/assets/images/loadinfo_sharkattackdata.net.gif');
 }
+
+.badge {
+    background-color: #333;
+}
+
+.places-page .list-group .list-group-item-text .summary-figure {
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.places-page .list-group .list-group-item-text {
+    font-size: small;
+}
+
+.places-page .list-group-item h4 {
+    color: #df691a;
+}
+
+.places-page .list-group-item h4:hover {
+    text-decoration: underline;
+}
+
+.places-page .list-group .progress {
+    margin-top: 0.2em;
+}
+
+.indicator-provoked {
+    background-color: #2B3E50;
+}
+
+.indicator-non-fatal-and-unprovoked {
+    background-color: #5C8270;
+}
+
+.indicator-fatal-and-unprovoked {
+    background-color: #B50000;
+}

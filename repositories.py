@@ -3,23 +3,9 @@ import os, math, logging, datetime
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
-from models import SharkAttack, Country, Country, Area
+from models import SharkAttack, Country, Country, Area, PlaceSummary
 from utils import StringUtils
 
-
-class AttackPlaceSummary:
-    totalCount = None
-    fatalCount = None
-    unprovokedCount = None
-    fatalAndUnprovokedCount = None
-    def __init__(self, attacks):
-        self.totalCount = len(attacks)
-        self.fatalCount = len([y for y in attacks if y.fatal])
-        self.unprovokedCount = len([y for y in attacks if not y.provoked])
-        self.fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
-
-    def __repr__(self):
-        return "%s %s %s %s" % (self.totalCount, self.fatalCount, self.unprovokedCount, self.fatalAndUnprovokedCount)
 
 class SharkAttackRepository:
     def __init__(self):
@@ -28,14 +14,14 @@ class SharkAttackRepository:
     def getAttackNodeId(self, key):
         return "|".join(key.flat())
 
-    def getAttackPlaceSummaryKey(self, key):
+    def getPlaceSummaryKey(self, key):
         return "attackPlaceSummary_%s" % self.getAttackNodeId(key)
 
     def getAttacksPartKey(self, key, part):
         return "attacks_%s_part_%s" % (self.getAttackNodeId(key), part)
 
     def readAttackSummary(self, key):
-        summary = memcache.get(self.getAttackPlaceSummaryKey(key))
+        summary = memcache.get(self.getPlaceSummaryKey(key))
         if summary is None:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
         return summary
@@ -58,8 +44,8 @@ class SharkAttackRepository:
         return attacks
         
     def writeAttacksToCache(self, key, attacks):
-        summary = AttackPlaceSummary(attacks)
-        if not memcache.set(self.getAttackPlaceSummaryKey(key), summary):
+        summary = PlaceSummary(attacks)
+        if not memcache.set(self.getPlaceSummaryKey(key), summary):
             raise Exception("Unable to write attack parent node summary to memcache.")
         numParts = int(math.ceil(float(summary.totalCount)/float(self._attacksPerPart)))
         for i in range(numParts):
@@ -77,6 +63,9 @@ class SharkAttackRepository:
         summary = self.writeAttacksToCache(key, attacks)
         return summary, attacks
 
+
+    def getDescendantAttacksForCountry(self, countryId):
+        return self.readAttacksFromCache(ndb.Key("Country", countryId))
 
     def getDescendantAttacksForKey(self, key):
         attacks = self.readAttacksFromCache(key)
@@ -98,7 +87,9 @@ class CountryRepository:
         country = ndb.Key("Country", countryId).get()
         return country
 
-
+    def updatePlaceSummary(self, country, placeSummary):
+        country.place_summary = placeSummary
+        country.put()
 
 class AreaRepository:
     def getArea(self, countryId, areaId):

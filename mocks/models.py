@@ -7,6 +7,7 @@ from google.appengine.ext import ndb
 class Country:
     name = None
     urlPart = None
+    place_summary = None
     __areas = None
     def __init__(self, name, urlPart, areas):
         self.name = name
