@@ -378,6 +378,7 @@ application = webapp2.WSGIApplication([
 
     ('/sitemap.xml', sitemap.SiteMap),
 
+    ('/api/countries', api.Countries),
     ('/api/attacks', api.Attacks),
 
     ('/serviceops/generate-summaries', tasks.GenerateSummaries),

@@ -78,3 +78,11 @@ div.attack-place-summary div.charts .pie-chart {
 .indicator-fatal-and-unprovoked {
     background-color: #B50000;
 }
+
+.world-map-widget {
+    width: 800px;
+    height: 500px;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    padding-left: 100px;
+}

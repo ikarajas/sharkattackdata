@@ -1,4 +1,11 @@
 (function($) {
+    $.concat = function (a, b) {
+	$.each(b, function(index, value) {
+	    a.push(value);
+	});
+	return a;
+    };
+
     Utils = {
 	range: function(start, end) {
 	    retval = [];
@@ -38,6 +45,17 @@
 	}
     };
 
+    Constants = {
+	colorBase: "#2B3E50",
+	colorBaseContrast: "#4E5D6C",
+	colorBaseLightest: "#A6AEB6",
+	colorHighlight: "#DF691A",
+	colorNeutral: "#5C8270",
+	colorNeutralContrast: "#C2EDD9",
+	colorFatal: "#B50000",
+	colorFatalContrast: "#ED0000"
+    };
+
     $.widget("SharkAttackData.PlaceWidget", {
 	_create: function() {
 	    var widget = this;
@@ -47,10 +65,10 @@
 		fontSize: "12",
 		fontName: "Lato, 'Helvetica Neue', Helvetica, Arial, sans-serif"
 	    };
-	    widget.colorNeutral = "#5C8270";
-	    widget.colorNeutralContrast = "#C2EDD9";
-	    widget.colorFatal = "#B50000";
-	    widget.colorFatalContrast = "#ED0000";
+	    Constants.colorNeutral = "#5C8270";
+	    Constants.colorNeutralContrast = "#C2EDD9";
+	    Constants.colorFatal = "#B50000";
+	    Constants.colorFatalContrast = "#ED0000";
 	    widget.pieChartWidth = 333;
 	    widget.pieChartHeight = 150;
 	    widget.loadingMessage = "Loading...";
@@ -281,7 +299,7 @@
 			    seriesType: "bars",
 			    isStacked: true,
 			    series: { 2: { type: "line" }, 3: { type: "line" } },
-			    colors: [ widget.colorFatal, widget.colorNeutral, widget.colorFatalContrast, widget.colorNeutralContrast ]
+			    colors: [ Constants.colorFatal, Constants.colorNeutral, Constants.colorFatalContrast, Constants.colorNeutralContrast ]
 			  };
 	    
             var chart = new google.visualization.ComboChart($("#timeline")[0]);
@@ -312,8 +330,8 @@
 			    }},
 			    backgroundColor: { fill: "none" },
 			    slices: {
-				0: { color: widget.colorFatal },
-				1: { color: widget.colorNeutral },
+				0: { color: Constants.colorFatal },
+				1: { color: Constants.colorNeutral },
 			    }
 			  };
 	    
@@ -368,9 +386,81 @@
 	}
     });
 
+
+    $.widget("SharkAttackData.WorldMapWidget", {
+	_create: function() {
+	    var widget = this;
+
+	    function WorldMapViewModel() {
+		var self = this;
+		self.countries = ko.observableArray();
+
+		self.chartingApiLoaded = ko.observable(false);
+		self.countriesLoaded = ko.observable(false);
+		self.readyToChart = ko.observable(false);
+
+		var iCanHasCharts = function() {
+		    if (self.chartingApiLoaded() && self.countriesLoaded()) {
+			self.readyToChart(true);
+		    }
+		};
+
+		self.chartingApiLoaded.subscribe(iCanHasCharts);
+		self.countriesLoaded.subscribe(iCanHasCharts);
+	    }
+
+	    widget.vm = new WorldMapViewModel();
+	    widget.vm.readyToChart.subscribe(function() { widget._drawMap(); });
+	    widget.element.addClass("please-wait");
+	    google.load("visualization", "1.0", { packages: ["geochart"], callback: function() { widget.vm.chartingApiLoaded(true); } });
+
+	    widget._getCountries();
+	},
+
+	_getCountries: function() {
+	    var widget = this;
+	    $.ajax({
+		url: "/api/countries",
+		type: "GET",
+		success: function(result) {
+		    widget.vm.countries.push.apply(widget.vm.countries, result);
+		    widget._onCountriesLoaded();
+		}
+	    });
+	},
+
+	_onCountriesLoaded: function() {
+	    var widget = this;
+	    widget.element.removeClass("please-wait");
+	    widget.vm.countriesLoaded(true);
+	},
+
+	_drawMap: function() {
+	    var widget = this;
+	    var data = google.visualization.arrayToDataTable(
+		$.concat(
+		    [['Country', 'Unprovoked Incidents']],
+		    $.map(widget.vm.countries(), function(value, index) {
+			return [[ value.name, value.counts.unprovoked ]];
+		    }))
+	    );
+	    
+            var options = {
+		backgroundColor: { fill: "none" },
+		colorAxis: { colors: [ Constants.colorBaseLightest, Constants.colorHighlight ] }
+	    };
+	    
+	    var $chartContainer = $("<div id='chart-container'></div>");
+	    widget.element.append($chartContainer);
+            var chart = new google.visualization.GeoChart($chartContainer[0]);
+            chart.draw(data, options);
+	}
+    });
+
     $(document).ready(function() {
 	$(".place-widget").PlaceWidget();
 	$(".places-list-widget").PlacesListWidget();
+	$(".world-map-widget").WorldMapWidget();
     });
 })(jQuery);
 
