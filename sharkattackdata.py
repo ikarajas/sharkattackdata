@@ -61,9 +61,24 @@ class BasePage(webapp2.RequestHandler):
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
 
+    def get(self, *args, **kwargs):
+        self.respond(*args, **kwargs)
+
     def head(self, *args, **kwargs):
-        # Prevent 405 errors on HEAD requests. Note: we'll be lying about Content-Length.
-        return
+        self.respond(*args, **kwargs)
+
+    def respond(self, *args, **kwargs):
+        pageDict = self.handle(*args)
+        template_values = {
+            "title": "Shark Attack Data",
+            "subtemplate": self.resolveTemplatePath("basepage.html")
+            }
+        
+        for key, value in pageDict.iteritems():
+            template_values[key] = value
+
+        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath(self._pageTemplate))
+        self.response.write(template.render(template_values))
 
     def getBreadcrumbData(self, node):
         retval = []
@@ -99,65 +114,47 @@ class BasePage(webapp2.RequestHandler):
             root = os.path.join(root, "sharkattackdata")
         return os.path.join(root, relativePath)
 
-    def doIt(self, *args, **kwargs):
-        template_values = {
-            "title": "Shark Attack Data",
-            "subtemplate": self.resolveTemplatePath("basepage.html")
-            }
-        
-        previousKwargs = args[0]
-        for key, value in (dict(previousKwargs.items() + kwargs.items())).iteritems():
-            template_values[key] = value
-
-        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath(self._pageTemplate))
-        self.response.write(template.render(template_values))
-
 class MainPage(BasePage):
-    def get(self):
-        self.doIt(
-            {},
-            breadcrumb_data=self.getBreadcrumbData(None)
-            )
+    def handle(self):
+        return {
+            "breadcrumb_data": self.getBreadcrumbData(None)
+            }
 
 class SharkAttacksByLocationPage(BasePage):
     def __init__(self, request, response):
         super(SharkAttacksByLocationPage, self).__init__(request, response)
 
-    def get(self):
-        super(SharkAttacksByLocationPage, self).doIt(
-            {},
-            subtemplate=self.resolveTemplatePath("places.html"),
-            title="Shark Attacks by Location",
-            highest_total=sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)[0].count_total,
-            countries=sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)
-            )
+    def handle(self):
+        return {
+            "subtemplate": self.resolveTemplatePath("places.html"),
+            "title": "Shark Attacks by Location",
+            "highest_total": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)[0].count_total,
+            "countries": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)
+            }
 
 class AttackPage(BasePage):
     def __init__(self, request, response):
         super(AttackPage, self).__init__(request, response)
 
-    def get(self, countryId, areaId, attackId):
+    def handle(self, countryId, areaId, attackId):
         key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
         attack = key.get()
         area = attack.key.parent().get()
         country = area.key.parent().get()
         
-        super(AttackPage, self).doIt(
-            {},
-            subtemplate=self.resolveTemplatePath("attack.html"),
-            title="Shark Attack at %s in %s, %s" % (attack.location, area.name, country.name),
-            attack=attack,
-            breadcrumb_data=self.getBreadcrumbData(attack)
-            )
+        return {
+            "subtemplate": self.resolveTemplatePath("attack.html"),
+            "title": "Shark Attack at %s in %s, %s" % (attack.location, area.name, country.name),
+            "attack": attack,
+            "breadcrumb_data": self.getBreadcrumbData(attack)
+            }
 
 class LocationPage(BasePage):
     def __init__(self, request, response):
         super(LocationPage, self).__init__(request, response)
 
-    def doIt(self, **kwargs):
-        super(LocationPage, self).doIt(
-            kwargs
-            )
+    def handle(self):
+        return {}
 
 class CountryPage(LocationPage):
     def __init__(self, request, response):
@@ -167,74 +164,68 @@ class CountryPage(LocationPage):
         self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         self._areas = [y for y in Area.query(ancestor=self._country.key).fetch()]
 
-    def get(self, countryNameKey):
+    def handle(self, countryNameKey):
         self.onGet(countryNameKey)
-        self.doIt(
-            title="Shark Attack Data: %s" % self._country.name,
-            subtemplate=self.resolveTemplatePath("country.html"),
-            country=self._country,
-            areas = sorted(self._areas, key=lambda a: a.name), #needed by GSAF page
-            breadcrumb_data=self.getBreadcrumbData(self._country))
+        return {
+            "title": "Shark Attack Data: %s" % self._country.name,
+            "subtemplate": self.resolveTemplatePath("country.html"),
+            "country": self._country,
+            "areas": sorted(self._areas, key=lambda a: a.name), #needed by GSAF page
+            "breadcrumb_data": self.getBreadcrumbData(self._country)
+            }
 
 class CountryOverviewPage(CountryPage):
     def __init__(self, request, response):
         super(CountryOverviewPage, self).__init__(request, response)
 
-    def get(self, countryNameKey):
+    def handle(self, countryNameKey):
         self.onGet(countryNameKey)
 
-        self.doIt(
-            title="Shark Attack Data: %s" % self._country.name,
-            subtemplate=self.resolveTemplatePath("countryOverview.html"),
-            country=self._country,
-            breadcrumb_data=self.getBreadcrumbData(self._country),
-            areas=sorted(self._areas, key=lambda a: a.name))
+        return {
+            "title": "Shark Attack Data: %s" % self._country.name,
+            "subtemplate": self.resolveTemplatePath("countryOverview.html"),
+            "country": self._country,
+            "breadcrumb_data": self.getBreadcrumbData(self._country),
+            "areas": sorted(self._areas, key=lambda a: a.name)
+            }
 
 class AreaPage(LocationPage):
     def __init__(self, request, response):
         super(AreaPage, self).__init__(request, response)
 
-    def get(self, countryNameKey, areaNameKey):
+    def handle(self, countryNameKey, areaNameKey):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         area = country.getAreaForName(areaNameKey)
 
-        self.doIt(
-            subtemplate=self.resolveTemplatePath("area.html"),
-            title="Shark Attack Data: %s, %s" % (area.name, country.name),
-            country=country,
-            area=area,
-            breadcrumb_data=self.getBreadcrumbData(area))
+        return {
+            "subtemplate": self.resolveTemplatePath("area.html"),
+            "title": "Shark Attack Data: %s, %s" % (area.name, country.name),
+            "country": country,
+            "area": area,
+            "breadcrumb_data": self.getBreadcrumbData(area)
+            }
 
 class GsafMainPage(MainPage):
-    def get(self):
-        self.doIt(
-            {},
-            breadcrumb_data=self.getBreadcrumbData(None),
-            countries=sorted(self.helper.getCountries(), key=lambda c: c.name)
-            )
+    def handle(self):
+        return {
+            "breadcrumb_data": self.getBreadcrumbData(None),
+            "countries": sorted(self.helper.getCountries(), key=lambda c: c.name)
+            }
+
     def __init__(self, *args):
         super(GsafMainPage, self).__init__(*args)
         
 class GsafAttackPage(AttackPage):
     def __init__(self, *args):
         super(GsafAttackPage, self).__init__(*args)
-
-    def get(self, *args):
-        super(GsafAttackPage, self).get(*args)
         
 class GsafAreaPage(AreaPage):
     def __init__(self, *args):
         super(GsafAreaPage, self).__init__(*args)
-
-    def get(self, *args):
-        super(GsafAreaPage, self).get(*args)
         
 class GsafCountryPage(CountryPage):
     def __init__(self, *args):
         super(GsafCountryPage, self).__init__(*args)
-
-    def get(self, *args):
-        super(GsafCountryPage, self).get(*args)
 
 
 class JsonServiceHandler(webapp2.RequestHandler):
