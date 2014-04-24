@@ -18,3 +18,8 @@
     background-repeat:no-repeat;
     background-position:center; 
 }
+
+div.centred {
+    margin-left: auto;
+    margin-right: auto;
+}

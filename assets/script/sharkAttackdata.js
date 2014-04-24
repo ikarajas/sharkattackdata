@@ -42,6 +42,18 @@
 	    }
 	    var retval = sum / period;
 	    return retval;
+	},
+
+	initResizeHandler: function(eventNamespace, onResize) {
+	    var resizeHandler = null;
+	    $(window).on("resize." + eventNamespace, function(e){
+		$(window).resize(function() {
+		    clearTimeout(resizeHandler);
+		    resizeHandler = setTimeout(function() {
+			onResize();
+		    }, 250);
+		});
+	    });
 	}
     };
 
@@ -211,14 +223,8 @@
 		widget.vm.filterDropdownProvokedState(widget.vm.filterStatuses_provoked[newStateKey]);
 	    });
 
-	    var resizeHandler = null;
-	    $(window).on('resize.placeWidget', function(e){
-		$(window).resize(function() {
-		    clearTimeout(resizeHandler);
-		    resizeHandler = setTimeout(function() {
-			widget._drawCharts();
-		    }, 250);
-		});
+	    Utils.initResizeHandler("placeWidget", function() {
+		widget._drawCharts();
 	    });
 	},
 
@@ -411,10 +417,20 @@
 
 	    widget.vm = new WorldMapViewModel();
 	    widget.vm.readyToChart.subscribe(function() { widget._drawMap(); });
+
+	    // Reserve enough vertical space for the chart when it loads.
+	    widget.element.height(widget.element.width() * (605/970));
+
+	    widget.chartContainer = $("<div id='chart-container'></div>");
+	    widget.element.append(widget.chartContainer);
 	    widget.element.addClass("please-wait");
 	    google.load("visualization", "1.0", { packages: ["geochart"], callback: function() { widget.vm.chartingApiLoaded(true); } });
 
 	    widget._getCountries();
+
+	    Utils.initResizeHandler("worldMapWidget", function() {
+		widget._drawMap();
+	    });
 	},
 
 	_getCountries: function() {
@@ -450,9 +466,9 @@
 		colorAxis: { colors: [ Constants.colorBaseLightest, Constants.colorHighlight ] }
 	    };
 	    
-	    var $chartContainer = $("<div id='chart-container'></div>");
-	    widget.element.append($chartContainer);
-            var chart = new google.visualization.GeoChart($chartContainer[0]);
+	    widget.element.css("height", "auto");
+	    widget.chartContainer.empty();
+            var chart = new google.visualization.GeoChart(widget.chartContainer[0]);
             chart.draw(data, options);
 	}
     });

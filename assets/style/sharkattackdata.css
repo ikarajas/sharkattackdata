@@ -80,9 +80,7 @@ div.attack-place-summary div.charts .pie-chart {
 }
 
 .world-map-widget {
-    width: 800px;
-    height: 500px;
+    width: 100%;
     margin-top: 2em;
     margin-bottom: 2em;
-    padding-left: 100px;
 }
