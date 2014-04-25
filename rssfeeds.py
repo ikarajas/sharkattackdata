@@ -137,7 +137,6 @@ class SharkAttackFeed(RssFeed):
 
         link = self._baseUrl + "place"
 
-
         self._configure(title, link, title)
         for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):
             attackTitle = "%s at %s, %s" % (attack.date_userfriendly, attack.location, attack.area)
