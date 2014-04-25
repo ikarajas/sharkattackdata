@@ -57,7 +57,6 @@ class BasePage(webapp2.RequestHandler):
         self._urlScheme = os.environ.get("wsgi.url_scheme")
         self._path = os.environ.get("PATH_INFO")
         self._fullUrl = "%s://%s%s" % (self._urlScheme, self._host, self._path)
-        logging.info(os.environ)
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
