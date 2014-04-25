@@ -6,7 +6,7 @@ from google.appengine.ext import ndb
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories import SharkAttackRepository
+from repositories import SharkAttackRepository, CountryRepository
 
 import sitemap, rssfeeds, api, tasks
 
@@ -17,7 +17,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
 
 class Helper():
     def __init__(self):
-        pass
+        self._countryRepository = CountryRepository()
 
     def uniqueify(self, seq):
         seen = set()
@@ -25,11 +25,7 @@ class Helper():
         return [x for x in seq if x not in seen and not seen_add(x)]
 
     def getCountries(self):
-        countries = None
-        if countries is None:
-            query = Country.query()
-            countries = [y for y in query.iter()]
-        return countries
+        return self._countryRepository.getCountries()
 
     def getNormalisedCountryName(self, countryName):
         return StringUtils.normalisePlaceName(countryName)
