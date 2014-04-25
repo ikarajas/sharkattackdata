@@ -68,6 +68,9 @@ class SiteMap(webapp2.RequestHandler):
     def __getCountryUrl(self, countryId):
         return "/place/%s" % countryId
 
+    def __getCountryOverviewUrl(self, countryId):
+        return "/country-overview/%s" % countryId
+
     def __getAreaUrl(self, countryId, areaId):
         return "/place/%s/%s" % (countryId, areaId)
 
@@ -78,11 +81,12 @@ class SiteMap(webapp2.RequestHandler):
         self._smg.addUrl(SiteMapUrl("/", None, "weekly", 1.0))
         self._smg.addUrl(SiteMapUrl("/places", None, "weekly", 1.0))
         for country in self._countryRepository.getCountries():
-            self._smg.addUrl(SiteMapUrl(self.__getCountryUrl(country.urlPart), None, "weekly", 0.9))
+            self._smg.addUrl(SiteMapUrl(self.__getCountryOverviewUrl(country.urlPart), None, "weekly", 0.9))
+            self._smg.addUrl(SiteMapUrl(self.__getCountryUrl(country.urlPart), None, "weekly", 0.7))
             for area in self._areaRepository.getAreasOfCountryForId(country.urlPart):
                 self._smg.addUrl(SiteMapUrl(self.__getAreaUrl(country.urlPart, area.urlPart), None, "weekly", 0.8))
-                for attack in self._sharkAttackRepository.getDescendantAttacksForKey(area.key):
-                    self._smg.addUrl(SiteMapUrl(self.__getAttackUrl(country.urlPart, area.urlPart, attack.gsaf_case_number), None, "monthly", 0.5))
+                # for attack in self._sharkAttackRepository.getDescendantAttacksForKey(area.key):
+                #     self._smg.addUrl(SiteMapUrl(self.__getAttackUrl(country.urlPart, area.urlPart, attack.gsaf_case_number), None, "monthly", 0.5))
         return self._smg.generateXml()
 
     def get(self):
