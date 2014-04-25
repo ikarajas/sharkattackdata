@@ -223,6 +223,17 @@ class GsafCountryPage(CountryPage):
     def __init__(self, *args):
         super(GsafCountryPage, self).__init__(*args)
 
+class Place2AttackRedirect(webapp2.RequestHandler):
+    # Used to provide redirects for bad URLs introduced in previous sitemap.xml.
+    def get(self, *args, **kwargs):
+        self.respond(*args, **kwargs)
+
+    def head(self, *args, **kwargs):
+        self.respond(*args, **kwargs)
+
+    def respond(self, countryId, areaId, attackId):
+        self.response.status = "301 Moved Permanently"
+        self.response.headers["Location"] = "/attack/%s/%s/%s" % (countryId, areaId, attackId)
 
 class JsonServiceHandler(webapp2.RequestHandler):
     def post(self):
@@ -346,6 +357,9 @@ application = webapp2.WSGIApplication([
     ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
     ('/place/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex), AreaPage),
     ('/attack/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), AttackPage),
+
+    # Used to provide redirects for bad URLs introduced in previous sitemap.xml.
+    ('/place/%s/%s/%s' % (Constants.UrlPartCountryRegex, Constants.UrlPartAreaRegex, Constants.UrlPartGsafCaseNumberRegex), Place2AttackRedirect),
 
     ('/gsaf', GsafMainPage),
     ('/gsaf/place', GsafMainPage),
