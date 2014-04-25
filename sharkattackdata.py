@@ -55,6 +55,9 @@ class BasePage(webapp2.RequestHandler):
         self._pageTemplate = "main.html"
         self._host = os.environ.get("HTTP_HOST")
         self._urlScheme = os.environ.get("wsgi.url_scheme")
+        self._path = os.environ.get("PATH_INFO")
+        self._fullUrl = "%s://%s%s" % (self._urlScheme, self._host, self._path)
+        logging.info(os.environ)
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
@@ -71,7 +74,8 @@ class BasePage(webapp2.RequestHandler):
             "title": "Shark Attack Data",
             "subtemplate": self.resolveTemplatePath("basepage.html"),
             "og_image": "%s://%s/assets/images/Sharks-1920-1200.jpg" % (self._urlScheme, self._host),
-            "meta_description": Constants.SiteDescription
+            "meta_description": Constants.SiteDescription,
+            "full_url": self._fullUrl
             }
         
         for key, value in pageDict.iteritems():
