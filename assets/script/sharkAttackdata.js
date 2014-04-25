@@ -61,6 +61,7 @@
 	colorBase: "#2B3E50",
 	colorBaseContrast: "#4E5D6C",
 	colorBaseLightest: "#A6AEB6",
+	colorMidRangeIncidents: "#336600",
 	colorHighlight: "#DF691A",
 	colorNeutral: "#5C8270",
 	colorNeutralContrast: "#C2EDD9",
@@ -463,7 +464,10 @@
 	    
             var options = {
 		backgroundColor: { fill: "none" },
-		colorAxis: { colors: [ Constants.colorBaseLightest, Constants.colorHighlight ] }
+		colorAxis: {
+		    values: [0, 100, 2000],
+		    colors: [ Constants.colorBaseLightest, Constants.colorMidRangeIncidents, Constants.colorHighlight ]
+		}
 	    };
 	    
 	    widget.element.css("height", "auto");
