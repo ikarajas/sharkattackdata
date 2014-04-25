@@ -3,6 +3,24 @@
     background-size: cover;
 }
 
+.social-media-buttons {
+    display: block;
+    position: absolute;
+    height: 80px;
+    min-width: 300px;
+    text-align: right;
+}
+
+.social-media-buttons > div {
+    padding-right: 1em;
+    display: inline;
+    float: right;
+}
+
+.social-media-buttons > div.twitter {
+    padding-top: 1px;
+}
+
 div.page-header a {
     color: white
 }

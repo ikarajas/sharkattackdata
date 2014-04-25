@@ -473,7 +473,30 @@
 	}
     });
 
+    $.fn.socialMediaButtons = function() {
+	var element = this;
+
+	var setPosition = function() {
+	    var $elem = $(element);
+	    var elemWidth = $elem.outerWidth();
+	    var elemOffset = $elem.offset();
+
+	    var $container = $("header");
+	    var containerWidth = $container.outerWidth();
+
+	    $elem.offset({ top: 10, left: containerWidth - elemWidth });
+	};
+
+	$(window).on("resize.socialMediaButtons", function(event) {
+	    setPosition();
+	});
+	setPosition();
+	return this;
+    };
+
     $(document).ready(function() {
+	$(".social-media-buttons").socialMediaButtons();
+
 	$(".place-widget").PlaceWidget();
 	$(".places-list-widget").PlacesListWidget();
 	$(".world-map-widget").WorldMapWidget();
@@ -502,50 +525,6 @@
  *   of the <td> itself.
  */
 jQuery.fn.sortElements = (function(){
-    
-    var sort = [].sort;
-    
-    return function(comparator, getSortable) {
-	
-        getSortable = getSortable || function(){return this;};
-	
-        var placements = this.map(function(){
-	    
-            var sortElement = getSortable.call(this),
-            parentNode = sortElement.parentNode,
-	    
-            // Since the element itself will change position, we have
-            // to have some way of storing its original position in
-            // the DOM. The easiest way is to have a 'flag' node:
-            nextSibling = parentNode.insertBefore(
-                document.createTextNode(''),
-                sortElement.nextSibling
-            );
-	    
-            return function() {
-		
-                if (parentNode === this) {
-                    throw new Error(
-                        "You can't sort elements if any one is a descendant of another."
-                    );
-                }
-		
-                // Insert before flag:
-                parentNode.insertBefore(this, nextSibling);
-                // Remove flag:
-                parentNode.removeChild(nextSibling);
-		
-            };
-	    
-        });
-	
-        return sort.call(this, comparator).each(function(i){
-            placements[i].call(getSortable.call(this));
-        });
-	
-    };
-    
-})();jQuery.fn.sortElements = (function(){
     
     var sort = [].sort;
     

@@ -53,6 +53,8 @@ class BasePage(webapp2.RequestHandler):
         self.helper = Helper()
         self._sharkAttackRepository = SharkAttackRepository()
         self._pageTemplate = "main.html"
+        self._host = os.environ.get("HTTP_HOST")
+        self._urlScheme = os.environ.get("wsgi.url_scheme")
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
@@ -67,7 +69,9 @@ class BasePage(webapp2.RequestHandler):
         pageDict = self.handle(*args)
         template_values = {
             "title": "Shark Attack Data",
-            "subtemplate": self.resolveTemplatePath("basepage.html")
+            "subtemplate": self.resolveTemplatePath("basepage.html"),
+            "og_image": "%s://%s/assets/images/Sharks-1920-1200.jpg" % (self._urlScheme, self._host),
+            "meta_description": Constants.SiteDescription
             }
         
         for key, value in pageDict.iteritems():
@@ -123,7 +127,8 @@ class SharkAttacksByLocationPage(BasePage):
     def handle(self):
         return {
             "subtemplate": self.resolveTemplatePath("places.html"),
-            "title": "Shark Attacks by Location",
+            "title": "Shark Attacks by Country",
+            "meta_description": "A list of countries in which shark attacks are recorded. Click on a country to show more information.",
             "highest_total": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)[0].count_total,
             "countries": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)
             }
@@ -140,7 +145,9 @@ class AttackPage(BasePage):
         
         return {
             "subtemplate": self.resolveTemplatePath("attack.html"),
-            "title": "Shark Attack at %s in %s, %s" % (attack.location, area.name, country.name),
+            "title": "Shark attack at %s in %s, %s" % (attack.location, area.name, country.name),
+            "meta_description": "Details of a shark attack that occurred %s at %s in %s, %s." % \
+                (attack.date_userfriendly, attack.location, area.name, country.name),
             "attack": attack,
             "breadcrumb_data": self.getBreadcrumbData(attack)
             }
@@ -167,7 +174,8 @@ class CountryPage(LocationPage):
             "subtemplate": self.resolveTemplatePath("country.html"),
             "country": self._country,
             "areas": sorted(self._areas, key=lambda a: a.name), #needed by GSAF page
-            "breadcrumb_data": self.getBreadcrumbData(self._country)
+            "breadcrumb_data": self.getBreadcrumbData(self._country),
+            "meta_description": "A complete list of the shark attacks that have occurred in %s." % self._country.name
             }
 
 class CountryOverviewPage(CountryPage):
@@ -182,7 +190,9 @@ class CountryOverviewPage(CountryPage):
             "subtemplate": self.resolveTemplatePath("countryOverview.html"),
             "country": self._country,
             "breadcrumb_data": self.getBreadcrumbData(self._country),
-            "areas": sorted(self._areas, key=lambda a: a.name)
+            "areas": sorted(self._areas, key=lambda a: a.name),
+            "meta_description": "An overview of the shark attacks that have occurred in %s. " % (self._country.name) + \
+                "Provides statistical information including a timeline of unprovoked attacks as well as a graph of overall trends." 
             }
 
 class AreaPage(LocationPage):
@@ -198,7 +208,8 @@ class AreaPage(LocationPage):
             "title": "Shark Attack Data: %s, %s" % (area.name, country.name),
             "country": country,
             "area": area,
-            "breadcrumb_data": self.getBreadcrumbData(area)
+            "breadcrumb_data": self.getBreadcrumbData(area),
+            "meta_description": "A complete list of the shark attacks that have occurred in %s, %s." % (area.name, country.name)
             }
 
 class GsafMainPage(MainPage):
@@ -344,6 +355,9 @@ class Authenticate(webapp2.RequestHandler):
 
 
 class Constants:
+    SiteDescription = "Welcome to Shark Attack Data. The aim of this website is to increase understanding, and promote an informed " + \
+    "discussion on the subject of shark attacks; when, where and how they occur. Through visualisation of the data, it aims to help " + \
+    "identify where patterns exist in terms of both geography and time."
     UrlPartCountryRegex = r"([A-Za-z\-_]+)"
     UrlPartAreaRegex = r"([A-Za-z0-9\-_]+)"
     UrlPartGsafCaseNumberRegex = r"([A-Za-z0-9\-\._]+)"
