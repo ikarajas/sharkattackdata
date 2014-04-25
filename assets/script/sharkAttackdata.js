@@ -380,15 +380,19 @@
     $.widget("SharkAttackData.PlacesListWidget", {
 	_create: function() {
 	    $(".order-countries .by-name").on("click.placesListWidget", function(e) {
+		$(".order-countries button").removeClass("active");
 		$('div.country-list-item').sortElements(function(a, b) {
 		    return $(a).data().countryName > $(b).data().countryName ? 1 : -1;
 		});
+		$(e.target).addClass("active");
 	    });
 	    
 	    $(".order-countries .by-total").on("click.placesListWidget", function(e) {
+		$(".order-countries button").removeClass("active");
 		$('div.country-list-item').sortElements(function(a, b) {
 		    return $(a).data().countTotal > $(b).data().countTotal ? -1 : 1;
 		});
+		$(e.target).addClass("active");
 	    });
 	}
     });
