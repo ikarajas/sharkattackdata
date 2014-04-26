@@ -1,18 +1,23 @@
 .incident-list-container .filter-state-summary {
     font-style: italic;
 }
+
 .incident-list-container .filter-buttons button {
     width: 15em;
 }
+
 .incident-list-container table.incident-list td.approx-date {
     font-style: italic;
 }
+
 .incident-list-container table.incident-list th.date {
     width: 8em;
 }
+
 .incident-list-container table.incident-list th.fatal {
     width: 5em;
 }
+
 .please-wait{
     height: 10em;
     background-repeat:no-repeat;
