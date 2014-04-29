@@ -123,6 +123,12 @@ class MainPage(BasePage):
             "breadcrumb_data": self.getBreadcrumbData(None)
             }
 
+class LinksPage(BasePage):
+    def handle(self):
+        return {
+            "subtemplate": self.resolveTemplatePath("links.html")
+            }
+
 class SharkAttacksByLocationPage(BasePage):
     def __init__(self, request, response):
         super(SharkAttacksByLocationPage, self).__init__(request, response)
@@ -369,6 +375,7 @@ debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/links', LinksPage),
     ('/place', SharkAttacksByLocationPage),
     ('/country-overview/%s' % (Constants.UrlPartCountryRegex), CountryOverviewPage),
     ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
