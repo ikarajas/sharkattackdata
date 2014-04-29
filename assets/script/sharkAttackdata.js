@@ -492,7 +492,7 @@
 	    var $container = $("header");
 	    var containerWidth = $container.outerWidth();
 
-	    $elem.offset({ top: 10, left: containerWidth - elemWidth });
+	    $elem.offset({ top: 50, left: containerWidth - elemWidth });
 	};
 
 	$(window).on("resize.socialMediaButtons", function(event) {

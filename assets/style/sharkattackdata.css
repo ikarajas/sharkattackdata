@@ -3,6 +3,10 @@
     background-size: cover;
 }
 
+.navbar {
+    margin-bottom: 0px;
+}
+
 .social-media-buttons {
     display: block;
     position: absolute;
