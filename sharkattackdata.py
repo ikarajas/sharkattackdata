@@ -46,6 +46,13 @@ class Helper():
         if node._get_kind() == "Country":
             return os.path.join(path, "place" if isGsaf else "country-overview", node.key.id())
 
+    def resolveTemplatePath(self, relativePath, isGsaf):
+        root = "templates"
+        if isGsaf:
+            root = os.path.join(root, "gsaf")
+        else:
+            root = os.path.join(root, "sharkattackdata")
+        return os.path.join(root, relativePath)
 
 class BasePage(webapp2.RequestHandler):
     def __init__(self, request, response):
@@ -69,9 +76,16 @@ class BasePage(webapp2.RequestHandler):
 
     def respond(self, *args, **kwargs):
         pageDict = self.handle(*args)
+        
+        if pageDict.has_key("errorCode"):
+            errorCode = pageDict["errorCode"]
+            ErrorHandlers.generate404(self.request, self.response, errorCode)
+            return
+
         template_values = {
             "title": "Shark Attack Data",
             "subtemplate": self.resolveTemplatePath("basepage.html"),
+            "show_social_media_buttons": True,
             "og_image": "%s://%s/assets/images/Sharks-1920-1200.jpg" % (self._urlScheme, self._host),
             "meta_description": Constants.SiteDescription,
             "full_url": self._fullUrl
@@ -110,12 +124,7 @@ class BasePage(webapp2.RequestHandler):
         return retval
 
     def resolveTemplatePath(self, relativePath):
-        root = "templates"
-        if self.isGsaf():
-            root = os.path.join(root, "gsaf")
-        else:
-            root = os.path.join(root, "sharkattackdata")
-        return os.path.join(root, relativePath)
+        return self.helper.resolveTemplatePath(relativePath, self.isGsaf())
 
 class MainPage(BasePage):
     def handle(self):
@@ -149,6 +158,11 @@ class AttackPage(BasePage):
     def handle(self, countryId, areaId, attackId):
         key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
         attack = key.get()
+
+        if attack is None:
+            # TODO: if attackId matches an existing attack, do a 301 redirect to the correct URL.
+            return { "errorCode": 404 }
+
         area = attack.key.parent().get()
         country = area.key.parent().get()
         
@@ -174,10 +188,15 @@ class CountryPage(LocationPage):
 
     def onGet(self, countryNameKey):
         self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
+        if self._country is None:
+            return
         self._areas = [y for y in Area.query(ancestor=self._country.key).fetch()]
 
     def handle(self, countryNameKey):
         self.onGet(countryNameKey)
+        if self._country is None:
+            return { "errorCode": 404 }
+
         return {
             "title": "Shark Attack Data: %s" % self._country.name,
             "subtemplate": self.resolveTemplatePath("country.html"),
@@ -193,6 +212,8 @@ class CountryOverviewPage(CountryPage):
 
     def handle(self, countryNameKey):
         self.onGet(countryNameKey)
+        if self._country is None:
+            return { "errorCode": 404 }
 
         return {
             "title": "Shark Attack Data: %s" % self._country.name,
@@ -210,7 +231,12 @@ class AreaPage(LocationPage):
 
     def handle(self, countryNameKey, areaNameKey):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
+        if country is None:
+            return { "errorCode": 404 }
+
         area = country.getAreaForName(areaNameKey)
+        if area is None:
+            return { "errorCode": 404 }
 
         return {
             "subtemplate": self.resolveTemplatePath("area.html"),
@@ -371,6 +397,32 @@ class Constants:
     UrlPartAreaRegex = r"([A-Za-z0-9\-_]+)"
     UrlPartGsafCaseNumberRegex = r"([A-Za-z0-9\-\._]+)"
 
+class ErrorHandlers:
+    @staticmethod
+    def generateErrorResponse(request, response, title, subTemplate, responseStatus):
+        isGsaf = request.path.startswith("/gsaf")
+        helper = Helper()
+        template_values = {
+            "title": title,
+            "subtemplate": subTemplate
+            }
+
+        template = JINJA_ENVIRONMENT.get_template(helper.resolveTemplatePath("main.html", isGsaf))
+        response.set_status(responseStatus)
+        response.write(template.render(template_values))
+
+    @staticmethod
+    def generate404(request, response, responseStatus):
+        ErrorHandlers.generateErrorResponse(request, response, "Page not found", "/templates/common/404_error.html", responseStatus)
+
+    @staticmethod
+    def handle404(request, response, exception):
+        ErrorHandlers.generate404(request, response, 404)
+
+    @staticmethod
+    def handle500(request, response, exception):
+        ErrorHandlers.generateErrorResponse(request, response, "Error", "/templates/common/500_error.html", 500)
+
 debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 
 application = webapp2.WSGIApplication([
@@ -412,3 +464,7 @@ application = webapp2.WSGIApplication([
     ('/serviceops/flush-memcache', FlushMemcache),
     ('/serviceops/authenticate', Authenticate)
     ], debug=debug)
+
+application.error_handlers[404] = ErrorHandlers.handle404
+if not debug:
+    application.error_handlers[500] = ErrorHandlers.handle500
