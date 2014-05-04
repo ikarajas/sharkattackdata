@@ -276,8 +276,43 @@
 	    );
 	    
 	    widget._drawTimelineChart();
+	    widget._drawIncidenceHistogram();
 	},
 	
+	_drawIncidenceHistogram: function() {
+	    var widget = this;
+	    var tableDataRaw = $.map(widget.vm.attacks(), function(value, index) {
+		var activity = value.activity.toLowerCase()
+		var likeSurfing = activity.indexOf("surf") > -1 || activity.indexOf("board") > -1 || activity.indexOf("swim") > -1 || activity.indexOf("snorkel") > -1;
+		if (value.date == null) return null;
+		if (value.provoked) return null;
+		if (value.fatal) return null;
+		if (!likeSurfing) return null;
+		var month = value.date.getMonth() + 1;
+		retval =  [[
+		    month
+		]];
+		console.log(value);
+		return retval;
+	    });
+	    tableDataRaw.unshift(["Month"])
+
+            var data = google.visualization.arrayToDataTable(tableDataRaw);
+	    
+	    // Note: use vAxis.gridLines.count and vAxis.format...
+            var options = { titleTextStyle: widget.chartBaseTextStyle,
+			    legend: { textStyle: widget.chartBaseTextStyle },
+			    vAxis: { textStyle: widget.chartBaseTextStyle, baselineColor: "#fff", gridlines: { color: "#777"} },
+			    hAxis: { textStyle: widget.chartBaseTextStyle },
+			    fontName: widget.chartBaseTextStyle.fontName,
+			    backgroundColor: { fill: "none" },
+			    histogram: { bucketSize: 1 }
+			  };
+	    
+            var chart = new google.visualization.Histogram($("#incidence-histogram")[0]);
+            chart.draw(data, options);
+	},
+
 	_drawTimelineChart: function() {
 	    var widget = this;
 	    var tableDataRaw = $.map(widget.vm.attackStatsByYear(), function(value, index) {
