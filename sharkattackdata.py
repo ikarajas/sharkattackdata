@@ -367,7 +367,9 @@ class PostSharkAttacks(JsonServiceHandler):
                                   fatal = attackrow[15] == "True",
                                   provoked = attackrow[16] == "True")
             attacksToStore.append(toStore)
+        logging.info("put_multi() started.")
         ndb.put_multi(attacksToStore)
+        logging.info("put_multi() complete.")
         memcache.add("countryDict", self._countries)
         memcache.add("areaDict", self._areas)
 

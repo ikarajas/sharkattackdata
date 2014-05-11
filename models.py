@@ -64,12 +64,12 @@ class Country(ndb.Model):
     place_summary = ndb.PickleProperty()
 
     #These have the potential to return incorrect data if place_summary is not updated.
-    count_total = ndb.ComputedProperty(lambda c: c.place_summary.totalCount)
-    count_fatal = ndb.ComputedProperty(lambda c: c.place_summary.fatalCount)
-    count_provoked = ndb.ComputedProperty(lambda c: c.place_summary.totalCount - c.place_summary.unprovokedCount)
-    count_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.unprovokedCount)
-    count_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.fatalAndUnprovokedCount)
-    count_non_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: c.place_summary.unprovokedCount - c.place_summary.fatalAndUnprovokedCount)
+    count_total = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.totalCount)
+    count_fatal = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.fatalCount)
+    count_provoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else (c.place_summary.totalCount - c.place_summary.unprovokedCount))
+    count_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.unprovokedCount)
+    count_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.fatalAndUnprovokedCount)
+    count_non_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else (c.place_summary.unprovokedCount - c.place_summary.fatalAndUnprovokedCount))
 
 
     @staticmethod
