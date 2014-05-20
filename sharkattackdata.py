@@ -4,6 +4,7 @@ import jinja2, webapp2, json, cgi, logging, datetime
 from google.appengine.api import memcache, users
 from google.appengine.ext import ndb
 
+from custom_exceptions import PageNotFoundException
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories import SharkAttackRepository, CountryRepository
@@ -75,11 +76,14 @@ class BasePage(webapp2.RequestHandler):
         self.respond(*args, **kwargs)
 
     def respond(self, *args, **kwargs):
-        pageDict = self.handle(*args)
-        
-        if pageDict.has_key("errorCode"):
-            errorCode = pageDict["errorCode"]
-            ErrorHandlers.generate404(self.request, self.response, errorCode)
+        try:
+            pageDict = self.handle(*args)
+        except PageNotFoundException as nfe:
+            if nfe.correctPath is not None:
+                self.response.status = "301 Moved Permanently"
+                self.response.headers["Location"] = nfe.correctPath
+            else:
+                ErrorHandlers.generate404(self.request, self.response, 404)
             return
 
         template_values = {
@@ -155,13 +159,22 @@ class AttackPage(BasePage):
     def __init__(self, request, response):
         super(AttackPage, self).__init__(request, response)
 
+    def getUrlForAttack(self, attack, isGsaf):
+        path = [""]
+        if isGsaf:
+            path.append("gsaf")
+        path.extend(["attack", attack.countryNormalised, attack.area_normalised, attack.gsaf_case_number])
+        return "/".join(path)
+
     def handle(self, countryId, areaId, attackId):
         key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
         attack = key.get()
 
         if attack is None:
-            # TODO: if attackId matches an existing attack, do a 301 redirect to the correct URL.
-            return { "errorCode": 404 }
+            attackById = SharkAttack.query(SharkAttack.gsaf_case_number == attackId).get()
+            if attackById is not None:
+                raise PageNotFoundException(correctPath=self.getUrlForAttack(attackById, False))
+            raise PageNotFoundException()
 
         area = attack.key.parent().get()
         country = area.key.parent().get()
@@ -195,7 +208,7 @@ class CountryPage(LocationPage):
     def handle(self, countryNameKey):
         self.onGet(countryNameKey)
         if self._country is None:
-            return { "errorCode": 404 }
+            raise PageNotFoundException()
 
         return {
             "title": "Shark Attack Data: %s" % self._country.name,
@@ -213,7 +226,7 @@ class CountryOverviewPage(CountryPage):
     def handle(self, countryNameKey):
         self.onGet(countryNameKey)
         if self._country is None:
-            return { "errorCode": 404 }
+            raise PageNotFoundException()
 
         return {
             "title": "Shark Attack Data: %s" % self._country.name,
@@ -232,11 +245,11 @@ class AreaPage(LocationPage):
     def handle(self, countryNameKey, areaNameKey):
         country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
         if country is None:
-            return { "errorCode": 404 }
+            raise PageNotFoundException()
 
         area = country.getAreaForName(areaNameKey)
         if area is None:
-            return { "errorCode": 404 }
+            raise PageNotFoundException()
 
         return {
             "subtemplate": self.resolveTemplatePath("area.html"),
