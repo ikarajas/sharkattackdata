@@ -63,7 +63,6 @@ class SharkAttackRepository:
         summary = self.writeAttacksToCache(key, attacks)
         return summary, attacks
 
-
     def getDescendantAttacksForCountry(self, countryId):
         return self.readAttacksFromCache(ndb.Key("Country", countryId))
 
@@ -75,6 +74,18 @@ class SharkAttackRepository:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
 
         return attacks
+
+    def getLastNAttacks(self, number, ancestorKey=None, provoked=False):
+        return SharkAttack \
+            .query(
+            ndb.AND(
+                SharkAttack.date != None,
+                SharkAttack.provoked == provoked),
+            ancestor=ancestorKey) \
+            .order(-SharkAttack.date) \
+            .fetch(number,
+                   projection=[SharkAttack.date, SharkAttack.date_userfriendly, SharkAttack.country, SharkAttack.area,
+                               SharkAttack.countryNormalised, SharkAttack.area_normalised, SharkAttack.gsaf_case_number, SharkAttack.fatal])
 
 
 class CountryRepository:

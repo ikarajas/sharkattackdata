@@ -32,6 +32,9 @@ div.page-header a {
 table.incident-list th.date {
     width: 8em;
 }
+table.incident-list tbody tr {
+    cursor: pointer;
+}
 table.place-summary {
     width: 20em;
 }

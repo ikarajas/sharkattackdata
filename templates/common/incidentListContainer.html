@@ -24,28 +24,30 @@
       </div>
     </div>
   </div>
-  <table class="table table-striped incident-list">
+  <table class="table table-striped table-hover incident-list">
     <thead>
-      <th class="date">Date</th>
-      {% if not area %}
-      <th class="area">Area</th>
-      {% endif %}
-      <th class="location">Location</th>
-      <th class="activity">Activity</th>
-      <th class="unprovoked">Unprovoked?</th>
-      <th class="fatal">Fatal?</th>
-      <th class="details"></th>
+      <tr>
+	<th class="date">Date</th>
+	{% if not area %}
+	<th class="area">Area</th>
+	{% endif %}
+	<th class="location">Location</th>
+	<th class="activity">Activity</th>
+	<th class="unprovoked">Unprovoked?</th>
+	<th class="fatal">Fatal?</th>
+	<th class="details"></th>
+      </tr>
     </thead>
     <tbody data-bind="foreach: attacksFiltered">
-      <td data-bind="text: dateUserFriendly, css: { 'approx-date': dateIsApproximate }">
-	{% if not area %}
+      <td data-bind="text: dateUserFriendly, css: { 'approx-date': dateIsApproximate }"></td>
+      {% if not area %}
       <td data-bind="text: area"></td>
       {% endif %}
       <td data-bind="text: location"></td>
       <td data-bind="text: activity"></td>
       <td data-bind="text: unprovokedUserFriendly"></td>
       <td data-bind="text: fatalUserFriendly"></td>
-      <td><a href="#" data-bind="attr: { href: detailsUrl, title: 'View incident details...' }">Details</a></td>
+      <td class="details"><a href="#" data-bind="attr: { href: detailsUrl, title: 'View incident details...' }">Details</a></td>
     </tbody>
   </table>
   <!-- ko if: noAttacksMatchFilterSettings -->

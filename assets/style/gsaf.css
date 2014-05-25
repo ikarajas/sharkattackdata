@@ -74,6 +74,9 @@ div.header {
     text-align: right;
 }
 
+table.incident-list tbody tr {
+    cursor: pointer;
+}
 .incident-list-container table.incident-list th.fatal {
     width: 6em !important;
 }

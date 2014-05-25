@@ -1,42 +1,85 @@
-<p>
-  Welcome to Shark Attack Data. The aim of this website is to increase
-  understanding, and promote an informed discussion on the subject of
-  shark attacks; when, where and how they occur. Through visualisation
-  of the data, it aims to help identify where patterns exist in terms
-  of both geography and time.
-</p>
+<div class="row">
+  <p>
+    Welcome to Shark Attack Data. The aim of this website is to increase
+    understanding, and promote an informed discussion on the subject of
+    shark attacks; when, where and how they occur. Through visualisation
+    of the data, it aims to help identify where patterns exist in terms
+    of both geography and time.
+  </p>
 
-<p>
-  All of the data on this site comes from
-  the <a href="http://www.sharkattackfile.net/">Global Shark Attack
-  File (GSAF)</a>, a spreadsheet of human/shark interactions, compiled
-  by the <a href="http://www.sharks.org/">Shark Attack Research
-  Institute</a>. It is hoped that this site makes it apparent that
-  shark attacks are extremely rare occurrences, while providing an
-  easily accessible resource for those wishing to know more about the
-  subject.
-</p>
+  <p>
+    All of the data on this site comes from
+    the <a href="http://www.sharkattackfile.net/">Global Shark Attack
+      File (GSAF)</a>, a spreadsheet of human/shark interactions, compiled
+    by the <a href="http://www.sharks.org/">Shark Attack Research
+      Institute</a>. It is hoped that this site makes it apparent that
+    shark attacks are extremely rare occurrences, while providing an
+    easily accessible resource for those wishing to know more about the
+    subject.
+  </p>
 
-<p>
-  Start by having a look at <a class="btn btn-primary"
-  href="/place">Incidents by country</a>
-</p>
+  <p>
+    Start by having a look at <a class="btn btn-primary"
+				 href="/place">Incidents by country</a>
+  </p>
 
-<hr></hr>
+  <hr></hr>
+</div>
 
-<h4>Unprovoked incidents worldwide</h4>
+<div class="row">
 
-<div class="world-map-widget"></div>
+  <div class="col-sm-6">
+    <h4>Unprovoked incidents worldwide</h4>
 
-<hr></hr>
+    <div class="world-map-widget"></div>
+  </div>
 
-<p>
-  Currently, shark attacks are grouped by country and then, within
-  each country, the area in which attacks have occurred. We are
-  currently investigating other ways to allow the data to be browsed
-  and queried. Suggestions are welcome; if you have one,
-  please <a href="mailto:contact@sharkattackdata.com?Subject=[SharkAttackData]"
-  target="_top">get in touch</a>!
-</p>
+  <div class="col-sm-6">
+    <h4>Latest unprovoked incidents</h4>
 
-<hr></hr>
+    <table class="table table-striped table-hover incident-list">
+      <thead>
+	<tr>
+	  <th class="date">Date</th>
+	  <th class="location">Location</th>
+	  <th class="fatal">Fatal?</th>
+	  <th class="details"></th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for attack in last_attacks %}
+	<tr>
+	  <td>{{ attack.date_userfriendly }}</td>
+	  <td>{{ attack.area }}, {{ attack.country }}</td>
+	  <td>{{ attack.fatalYesOrNo }}</td>
+	  <td class="details">
+	    <a title="View incident details..."
+	       href="/attack/{{attack.countryNormalised}}/{{attack.area_normalised}}/{{attack.gsaf_case_number}}">
+	      Details
+	    </a>
+	  </td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<div class="row">
+  <div class="span12">
+
+    <hr></hr>
+
+    <p>
+      Currently, shark attacks are grouped by country and then, within
+      each country, the area in which attacks have occurred. We are
+      currently investigating other ways to allow the data to be browsed
+      and queried. Suggestions are welcome; if you have one,
+      please <a href="mailto:contact@sharkattackdata.com?Subject=[SharkAttackData]"
+		target="_top">get in touch</a>!
+    </p>
+
+    <hr></hr>
+  </div>
+</div>

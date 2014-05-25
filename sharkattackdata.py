@@ -133,7 +133,8 @@ class BasePage(webapp2.RequestHandler):
 class MainPage(BasePage):
     def handle(self):
         return {
-            "breadcrumb_data": self.getBreadcrumbData(None)
+            "breadcrumb_data": self.getBreadcrumbData(None),
+            "last_attacks": self._sharkAttackRepository.getLastNAttacks(10, provoked=False)
             }
 
 class LinksPage(BasePage):

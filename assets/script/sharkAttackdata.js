@@ -232,6 +232,7 @@
 	_onAttacksLoaded: function() {
 	    var widget = this;
 	    widget.vm.attacksLoaded(true);
+	    $(".incident-list").incidentListTable();
 	    if (widget.element.find(".charts").length > 0) {
 		google.load("visualization", "1.0", { packages: ["corechart"], callback: function() { widget._onChartApiLoaded(); } });
 	    }
@@ -502,8 +503,16 @@
 	return this;
     };
 
+    $.fn.incidentListTable = function() {
+	var element = this;
+	$(element).find("tbody tr").on("click.incidentListTable", function(event) {
+	    window.location.href = $(event.target).parent("tr").find("td a").attr("href");
+	});
+    };
+
     $(document).ready(function() {
 	$(".social-media-buttons").socialMediaButtons();
+	$(".incident-list").incidentListTable();
 
 	$(".place-widget").PlaceWidget();
 	$(".places-list-widget").PlacesListWidget();
