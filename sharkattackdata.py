@@ -134,7 +134,7 @@ class MainPage(BasePage):
     def handle(self):
         return {
             "breadcrumb_data": self.getBreadcrumbData(None),
-            "last_attacks": self._sharkAttackRepository.getLastNAttacks(10, provoked=False)
+            "last_attacks": self._sharkAttackRepository.getLastTenAttacks()
             }
 
 class LinksPage(BasePage):

@@ -75,7 +75,17 @@ class SharkAttackRepository:
 
         return attacks
 
-    def getLastNAttacks(self, number, ancestorKey=None, provoked=False):
+    def getLastTenAttacks(self):
+        key = "last_ten_attacks"
+        val = memcache.get(key)
+        if val is None:
+            val = self.__getLastNAttacks(10)
+            if not memcache.set(key, val):
+                raise Exception("Unable to write %s to memcache." % key)
+        return val
+        
+
+    def __getLastNAttacks(self, number, ancestorKey=None, provoked=False):
         return SharkAttack \
             .query(
             ndb.AND(
