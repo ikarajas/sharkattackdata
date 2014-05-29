@@ -505,6 +505,10 @@
 
     $.fn.incidentListTable = function() {
 	var element = this;
+	$(element).find("tbody tr td a").on("click.incidentListTable", function(event) {
+	    event.stopPropagation();
+	});
+
 	$(element).find("tbody tr").on("click.incidentListTable", function(event) {
 	    window.location.href = $(event.target).parent("tr").find("td a").attr("href");
 	});
