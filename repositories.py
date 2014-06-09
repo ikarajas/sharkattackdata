@@ -90,6 +90,7 @@ class SharkAttackRepository:
             .query(
             ndb.AND(
                 SharkAttack.date != None,
+                SharkAttack.date > datetime.date.today() - datetime.timedelta(days=365),
                 SharkAttack.provoked == provoked),
             ancestor=ancestorKey) \
             .order(-SharkAttack.date) \
