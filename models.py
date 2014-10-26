@@ -28,7 +28,7 @@ class SharkAttack(ndb.Model):
             return sa.date_orig or "Unknown"
         else:
             year, month, day = sa.date.isoformat().split("T")[0].split("-")
-            return "%s %s %s" % (day, MonthsDict[int(month.replace("0", ""))], year)
+            return "%s %s %s" % (day, MonthsDict[int(month)], year)
 
     def getNormalisedCountryName(sa):
         return StringUtils.normaliseName(sa.country, toLower=True, spacesToUnderscore=True, dashesToUnderscore=True)
