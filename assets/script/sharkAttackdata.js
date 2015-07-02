@@ -6,6 +6,10 @@
 	return a;
     };
 
+    String.prototype.contains = function(s) {
+	return this.indexOf(s) > -1
+    };
+
     Utils = {
 	range: function(start, end) {
 	    retval = [];
@@ -503,6 +507,39 @@
 	return this;
     };
 
+    $.widget("SharkAttackData.SiteMaintenanceWidget", {
+	_create: function() {
+	    var widget = this;
+	    var referrer = "/";
+	    var query = window.location.search;
+	    var referrerEquals = "?referrer=";
+
+	    if (query.contains(referrerEquals)) {
+		var pathEncoded = query.replace(referrerEquals, "");
+		referrer = window.decodeURIComponent(pathEncoded);
+	    }
+
+	    $("a.retry").attr("href", referrer);
+
+	    var vm = {
+		retrySecs: ko.observable(60)
+	    };
+	    widget.vm = vm;
+
+	    ko.applyBindings(widget.vm, widget.element[0]);
+
+	    var checker = function() {
+		vm.retrySecs(vm.retrySecs() - 1);
+		if (vm.retrySecs() === 0) {
+		    window.location.href = referrer;
+		}
+		window.setTimeout(checker, 1000);
+	    };
+
+	    window.setTimeout(checker, 1000);
+	}
+    });
+
     $.fn.incidentListTable = function() {
 	var element = this;
 	$(element).find("tbody tr td a").on("click.incidentListTable", function(event) {
@@ -521,6 +558,7 @@
 	$(".place-widget").PlaceWidget();
 	$(".places-list-widget").PlacesListWidget();
 	$(".world-map-widget").WorldMapWidget();
+	$(".site-maintenance-widget").SiteMaintenanceWidget();
     });
 })(jQuery);
 

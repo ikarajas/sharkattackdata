@@ -1,5 +1,5 @@
 import os, math
-import jinja2, webapp2, json, cgi, logging, datetime
+import jinja2, webapp2, json, cgi, logging, datetime, urllib
 
 from google.appengine.api import memcache, users
 from google.appengine.ext import ndb
@@ -7,7 +7,8 @@ from google.appengine.ext import ndb
 from custom_exceptions import PageNotFoundException
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories import SharkAttackRepository, CountryRepository
+from repositories import SharkAttackRepository, CountryRepository, SiteInformationRepository
+from siteinformation import SiteInformation
 
 import sitemap, rssfeeds, api, tasks
 
@@ -59,12 +60,14 @@ class BasePage(webapp2.RequestHandler):
     def __init__(self, request, response):
         self.initialize(request, response)
         self.helper = Helper()
+        self._siteInformationRepository = SiteInformationRepository()
         self._sharkAttackRepository = SharkAttackRepository()
         self._pageTemplate = "main.html"
         self._host = os.environ.get("HTTP_HOST")
         self._urlScheme = os.environ.get("wsgi.url_scheme")
         self._path = os.environ.get("PATH_INFO")
         self._fullUrl = "%s://%s%s" % (self._urlScheme, self._host, self._path)
+        self._isSiteMaintenancePage = False
 
     def isGsaf(self):
         return self.__class__.__name__.startswith("Gsaf")
@@ -76,15 +79,21 @@ class BasePage(webapp2.RequestHandler):
         self.respond(*args, **kwargs)
 
     def respond(self, *args, **kwargs):
-        try:
-            pageDict = self.handle(*args)
-        except PageNotFoundException as nfe:
-            if nfe.correctPath is not None:
-                self.response.status = "301 Moved Permanently"
-                self.response.headers["Location"] = nfe.correctPath
-            else:
-                ErrorHandlers.generate404(self.request, self.response, 404)
+        siteInfo = self._siteInformationRepository.get()
+        if siteInfo.status == SiteInformation.STATUS_OFFLINE and not self._isSiteMaintenancePage:
+            self.response.status = "307 Temporary Redirect"
+            self.response.headers["Location"] = "/site-maintenance?%s" % urllib.urlencode({ "referrer": self._path })
             return
+        else:
+            try:
+                pageDict = self.handle(*args)
+            except PageNotFoundException as nfe:
+                if nfe.correctPath is not None:
+                    self.response.status = "301 Moved Permanently"
+                    self.response.headers["Location"] = nfe.correctPath
+                else:
+                    ErrorHandlers.generate404(self.request, self.response, 404)
+                return
 
         template_values = {
             "title": "Shark Attack Data",
@@ -141,6 +150,25 @@ class LinksPage(BasePage):
     def handle(self):
         return {
             "subtemplate": self.resolveTemplatePath("links.html")
+            }
+
+class SiteMaintenancePage(BasePage):
+    def __init__(self, request, response):
+        super(SiteMaintenancePage, self).__init__(request, response)
+        self._isSiteMaintenancePage = True
+
+    def handle(self):
+        si = self._siteInformationRepository.get()
+
+        if si.status == SiteInformation.STATUS_ONLINE:
+            raise PageNotFoundException(correctPath="/")
+
+        statusMessage = si.message
+        if statusMessage in (None, ""):
+            statusMessage = "The site is currently under maintenance."
+        return {
+            "subtemplate": self.resolveTemplatePath("site-maintenance.html"),
+            "statusMessage": statusMessage
             }
 
 class SharkAttacksByLocationPage(BasePage):
@@ -392,6 +420,12 @@ class FlushMemcache(webapp2.RequestHandler):
     def get(self):
         memcache.flush_all()
 
+class SetSiteInformation(JsonServiceHandler):
+    def handle(self, data):
+        siteInformationRepository = SiteInformationRepository()
+        si = SiteInformation(data["status"], data["message"])
+        siteInformationRepository.set(si)
+
 class Authenticate(webapp2.RequestHandler):
     def get(self):
         user = users.get_current_user()
@@ -444,6 +478,7 @@ debug = os.environ.get('SERVER_SOFTWARE', '').startswith('Dev')
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/links', LinksPage),
+    ('/site-maintenance', SiteMaintenancePage),
     ('/place', SharkAttacksByLocationPage),
     ('/country-overview/%s' % (Constants.UrlPartCountryRegex), CountryOverviewPage),
     ('/place/%s' % (Constants.UrlPartCountryRegex), CountryPage),
@@ -478,6 +513,7 @@ application = webapp2.WSGIApplication([
     ('/serviceops/post-sharkattacks', PostSharkAttacks),
     ('/serviceops/delete-sharkattacks', DeleteSharkAttacks),
     ('/serviceops/flush-memcache', FlushMemcache),
+    ('/serviceops/set-site-information', SetSiteInformation),
     ('/serviceops/authenticate', Authenticate)
     ], debug=debug)
 
