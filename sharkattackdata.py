@@ -49,12 +49,13 @@ class Helper():
             return os.path.join(path, "place" if isGsaf else "country-overview", node.key.id())
 
     def resolveTemplatePath(self, relativePath, isGsaf):
-        root = "templates"
+        parts = ["templates"]
         if isGsaf:
-            root = os.path.join(root, "gsaf")
+            parts.append("gsaf")
         else:
-            root = os.path.join(root, "sharkattackdata")
-        return os.path.join(root, relativePath)
+            parts.append("sharkattackdata")
+        parts.append(relativePath)
+        return "/".join(parts)
 
 class BasePage(webapp2.RequestHandler):
     def __init__(self, request, response):

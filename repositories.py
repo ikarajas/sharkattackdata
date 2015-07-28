@@ -5,6 +5,7 @@ from google.appengine.ext import ndb
 
 from models import SharkAttack, Country, Country, Area, PlaceSummary, SingletonStore
 from utils import StringUtils
+from siteinformation import SiteInformation
 
 
 class SharkAttackRepository:
