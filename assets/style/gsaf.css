@@ -96,3 +96,8 @@ ol.breadcrumb {
 .dropdown-menu {
     font-size: 11px;
 }
+
+.incident-type-selector-container {
+    display: inline;
+    margin-left: 0.2em;
+}

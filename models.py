@@ -2,24 +2,34 @@ import logging
 from utils import StringUtils
 from google.appengine.ext import ndb
 
+class GsafIncidentType():
+    PROVOKED = "Provoked"
+    UNPROVOKED = "Unprovoked"
+    BOATING = "Boating"
+    SEA_DISASTER = "Sea Disaster"
+    INVALID = "Invalid"
+
+
 MonthsDict = {
     1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 7: "Jul", 8: "Aug", 9: "Sept", 10: "Oct", 11: "Nov", 12: "Dec"
     }
 
 class PlaceSummary:
-    totalCount = None
-    fatalCount = None
+    totalCountAll = None
     unprovokedCount = None
     fatalAndUnprovokedCount = None
+    nonFatalAndUnprovokedCount = None
+
     def __init__(self, attacks):
-        self.totalCount = len(attacks)
-        self.fatalCount = len([y for y in attacks if y.fatal])
-        self.unprovokedCount = len([y for y in attacks if not y.provoked])
-        self.fatalAndUnprovokedCount = len([y for y in attacks if not y.provoked and y.fatal])
+        attacks = [y for y in attacks]
+        self.totalCountAll = len(attacks)
+        self.unprovokedCount = len([y for y in attacks if y.unprovoked])
+        self.fatalAndUnprovokedCount = len([y for y in attacks if y.fatal and y.unprovoked])
+        self.nonFatalAndUnprovokedCount = len([y for y in attacks if y.unprovoked and (not y.fatal)])
 
     def __repr__(self):
-        return "Total: %s, Fatal: %s, Unprovoked: %s, Fatal and Unprovoked: %s" % \
-            (self.totalCount, self.fatalCount, self.unprovokedCount, self.fatalAndUnprovokedCount)
+        figures = (self.totalCountAll, self.unprovokedCount, self.fatalAndUnprovokedCount, self.nonFatalAndUnprovokedCount)
+        return "Total: %s,  Unprovoked: %s, Fatal and Unprovoked: %s, Non-fatal and Unprovoked: %s" % figures
 
 class SharkAttack(ndb.Model):
 
@@ -41,6 +51,7 @@ class SharkAttack(ndb.Model):
     countryNormalised = ndb.ComputedProperty(lambda sa: sa.key.parent().parent().id())
     area = ndb.ComputedProperty(lambda sa: sa.key.parent().get().name) #make more efficient
     area_normalised = ndb.ComputedProperty(lambda sa: sa.key.parent().id())
+    incident_type = ndb.StringProperty()
     location = ndb.StringProperty()
     activity = ndb.StringProperty()
     name = ndb.StringProperty()
@@ -52,9 +63,14 @@ class SharkAttack(ndb.Model):
     investigator_or_source = ndb.StringProperty()
     date_is_approximate = ndb.BooleanProperty()
     fatal = ndb.BooleanProperty()
-    provoked = ndb.BooleanProperty()
 
-    unprovoked = ndb.ComputedProperty(lambda sa: False if sa.provoked else True)
+    unprovoked = ndb.ComputedProperty(lambda sa: sa.incident_type == GsafIncidentType.UNPROVOKED)
+    provoked = ndb.ComputedProperty(lambda sa: sa.incident_type == GsafIncidentType.PROVOKED)
+    boating = ndb.ComputedProperty(lambda sa: sa.incident_type == GsafIncidentType.BOATING)
+    sea_disaster = ndb.ComputedProperty(lambda sa: sa.incident_type == GsafIncidentType.SEA_DISASTER)
+    invalid = ndb.ComputedProperty(lambda sa: sa.incident_type == GsafIncidentType.INVALID)
+    valid = ndb.ComputedProperty(lambda sa: sa.incident_type != GsafIncidentType.INVALID)
+
     unprovokedUserFriendly = ndb.ComputedProperty(lambda sa: "Unprovoked" if not sa.provoked else "Provoked")
     fatalUserFriendly = ndb.ComputedProperty(lambda sa: "Fatal" if sa.fatal else "Not fatal")
     fatalYesOrNo = ndb.ComputedProperty(lambda sa: "Yes" if sa.fatal else "No")
@@ -65,13 +81,10 @@ class Country(ndb.Model):
     place_summary = ndb.PickleProperty()
 
     #These have the potential to return incorrect data if place_summary is not updated.
-    count_total = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.totalCount)
-    count_fatal = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.fatalCount)
-    count_provoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else (c.place_summary.totalCount - c.place_summary.unprovokedCount))
+    count_total_including_irrelevant = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.totalCountAll)
     count_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.unprovokedCount)
     count_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.fatalAndUnprovokedCount)
-    count_non_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else (c.place_summary.unprovokedCount - c.place_summary.fatalAndUnprovokedCount))
-
+    count_non_fatal_and_unprovoked = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.nonFatalAndUnprovokedCount)
 
     @staticmethod
     def forName(name):

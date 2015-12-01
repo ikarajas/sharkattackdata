@@ -12,15 +12,9 @@
 	  <li><a href="#" id="fatal-and-non-fatal" data-bind="text: filterStatuses_fatal.fatal_and_non_fatal"></a></li>
 	</ul>
       </div>
-      <div class="btn-group filter-on-provoked">
-	<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-	  <span data-bind="text: filterDropdownProvokedState"></span> <span class="caret"></span>
-	</button>
-	<ul class="dropdown-menu" role="menu">
-	  <li><a href="#" id="provoked-only" data-bind="text: filterStatuses_provoked.provoked_only"></a></li>
-	  <li><a href="#" id="unprovoked-only" data-bind="text: filterStatuses_provoked.unprovoked_only"></a></li>
-	  <li><a href="#" id="provoked-and-unprovoked" data-bind="text: filterStatuses_provoked.provoked_and_unprovoked"></a></li>
-	</ul>
+      <div class="incident-type-selector-container">
+	<select id="incident-type-selector" multiple="multiple" data-bind="options: incidentTypes, selectedOptions: selectedIncidentTypes">
+	</select>
       </div>
     </div>
   </div>
@@ -33,7 +27,7 @@
 	{% endif %}
 	<th class="location">Location</th>
 	<th class="activity">Activity</th>
-	<th class="unprovoked">Unprovoked?</th>
+	<th class="unprovoked">Incident Type</th>
 	<th class="fatal">Fatal?</th>
 	<th class="details"></th>
       </tr>
@@ -45,7 +39,7 @@
       {% endif %}
       <td data-bind="text: location"></td>
       <td data-bind="text: activity"></td>
-      <td data-bind="text: unprovokedUserFriendly"></td>
+      <td data-bind="text: incidentType"></td>
       <td data-bind="text: fatalUserFriendly"></td>
       <td class="details"><a href="#" data-bind="attr: { href: detailsUrl, title: 'View incident details...' }">Details</a></td>
     </tbody>

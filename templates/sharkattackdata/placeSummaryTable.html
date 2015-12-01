@@ -1,27 +1,46 @@
 <div class="attack-place-summary">
-  <h4>In numbers</h4>
+  <h4>Unprovoked counts</h4>
   <table class="table table-striped place-summary">
     <tr>
-      <th>Total</th>
-      <td data-bind="text: summaryStats.totalCount"></td>
-    </tr>
-    <tr>
-      <th>Fatal</th>
-      <td data-bind="text: summaryStats.fatalCount"></td>
-    </tr>
-    <tr>
-      <th>Unprovoked</th>
+      <th>Unprovoked (total)</th>
       <td data-bind="text: summaryStats.unprovokedCount"></td>
+    </tr>
+    <tr>
+      <th>Non-fatal and unprovoked</th>
+      <td data-bind="text: summaryStats.nonFatalAndUnprovokedCount"></td>
     </tr>
     <tr>
       <th>Fatal and unprovoked</th>
       <td data-bind="text: summaryStats.fatalAndUnprovokedCount"></td>
-  </tr>
+    </tr>
+  </table>
+
+  <h4>Provoked/invalid/sea disaster/boating counts</h4>
+  <table class="table table-striped place-summary">
+    <tr>
+      <th>Provoked/invalid/sea disaster/boating (total)</th>
+      <td data-bind="text: summaryStats.notUnprovokedCount"></td>
+    </tr>
+    <tr>
+      <th>Provoked</th>
+      <td data-bind="text: summaryStats.provokedCount"></td>
+    </tr>
+    <tr>
+      <th>Invalid</th>
+      <td data-bind="text: summaryStats.invalidCount"></td>
+    </tr>
+    <tr>
+      <th>Boating</th>
+      <td data-bind="text: summaryStats.boatingCount"></td>
+    </tr>
+    <tr>
+      <th>Sea Disaster</th>
+      <td data-bind="text: summaryStats.seaDisasterCount"></td>
+    </tr>
   </table>
 
   <div class="charts clearfix">
-    <div class="pie-chart please-wait" id="fatal"></div>
-    <div class="pie-chart please-wait" id="unprovoked"></div>
+    <div class="pie-chart please-wait" id="incident-type"></div>
     <div class="pie-chart please-wait" id="fatal-and-unprovoked"></div>
   </div>
 </div>

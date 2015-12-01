@@ -70,7 +70,12 @@
 	colorNeutral: "#5C8270",
 	colorNeutralContrast: "#C2EDD9",
 	colorFatal: "#B50000",
-	colorFatalContrast: "#ED0000"
+	colorFatalContrast: "#ED0000",
+	incidentTypeUnprovoked: "Unprovoked",
+	incidentTypeProvoked: "Provoked",
+	incidentTypeBoating: "Boating",
+	incidentTypeSeaDisaster: "Sea Disaster",
+	incidentTypeInvalid: "Invalid"
     };
 
     $.widget("SharkAttackData.PlaceWidget", {
@@ -150,7 +155,7 @@
 
 		self.attacksFiltered = ko.computed(function() {
 		    return $.grep(self.attacks(), function(a, i) {
-			fatalCheckPass = true;
+			var fatalCheckPass = true;
 
 			var fatalState = self.filterDropdownFatalState();
 			if (fatalState === self.filterStatuses_fatal.fatal_only && !a.fatal ||
@@ -158,15 +163,9 @@
 			    fatalCheckPass = false;
 			}
 
-			provokedCheckPass = true;
+			var incidentTypeCheckPass = $.inArray(a.incidentType, self.selectedIncidentTypes()) > -1;
 
-			var provokedState = self.filterDropdownProvokedState();
-			if (provokedState === self.filterStatuses_provoked.provoked_only && !a.provoked ||
-			    provokedState === self.filterStatuses_provoked.unprovoked_only && a.provoked) {
-			    provokedCheckPass = false;
-			}
-
-			return fatalCheckPass && provokedCheckPass;
+			return fatalCheckPass && incidentTypeCheckPass;
 		    })
 		});
 
@@ -175,11 +174,20 @@
 		});
 
 		self.filterDropdownFatalState = ko.observable(self.filterStatuses_fatal.fatal_and_non_fatal);
-		self.filterDropdownProvokedState = ko.observable(self.filterStatuses_provoked.provoked_and_unprovoked);
 		
+		self.incidentTypes = ko.observableArray([
+		    Constants.incidentTypeUnprovoked,
+		    Constants.incidentTypeProvoked,
+		    Constants.incidentTypeBoating,
+		    Constants.incidentTypeSeaDisaster,
+		    Constants.incidentTypeInvalid
+		]);
+
+		self.selectedIncidentTypes = ko.observableArray([Constants.incidentTypeUnprovoked]);
+
 		self.isFiltered = ko.computed(function() {
-		    return self.filterDropdownFatalState() !== self.filterStatuses_fatal.fatal_and_non_fatal ||
-			self.filterDropdownProvokedState() !== self.filterStatuses_provoked.provoked_and_unprovoked;
+		    return self.filterDropdownFatalState() !== self.filterStatuses_fatal.fatal_and_non_fatal
+			|| self.selectedIncidentTypes().length < self.incidentTypes().length;
 		});
 
 		self.filterStateSummary = ko.computed(function() {
@@ -190,15 +198,56 @@
 		});
 
 		self.summaryStats = {
-		    totalCount: ko.computed(function() {
-			return self.attacksLoaded() ? self.attacks().length : widget.loadingMessage;
-		    }),
 		    fatalCount: ko.computed(function() {
 			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) { return a.fatal; }).length : widget.loadingMessage;
 		    }),
+
 		    unprovokedCount: ko.computed(function() {
-			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) { return a.unprovoked; }).length : widget.loadingMessage;
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    return a.unprovoked;
+			}).length : widget.loadingMessage;
 		    }),
+
+		    notUnprovokedCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    var nonProvokedTypes = [
+				Constants.incidentTypeProvoked,
+				Constants.incidentTypeBoating,
+				Constants.incidentTypeSeaDisaster,
+				Constants.incidentTypeInvalid
+			    ];
+			    return ($.inArray(a.incidentType, nonProvokedTypes) > -1)
+			}).length : widget.loadingMessage;
+		    }),
+
+		    provokedCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    return a.incidentType === Constants.incidentTypeProvoked;
+			}).length : widget.loadingMessage;
+		    }),
+
+		    boatingCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    return a.incidentType === Constants.incidentTypeBoating;
+			}).length : widget.loadingMessage;
+		    }),
+
+		    seaDisasterCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    return a.incidentType === Constants.incidentTypeSeaDisaster;
+			}).length : widget.loadingMessage;
+		    }),
+
+		    invalidCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) {
+			    return a.incidentType === Constants.incidentTypeInvalid;
+			}).length : widget.loadingMessage;
+		    }),
+
+		    nonFatalAndUnprovokedCount: ko.computed(function() {
+			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) { return !a.fatal && a.unprovoked; }).length : widget.loadingMessage;
+		    }),
+
 		    fatalAndUnprovokedCount: ko.computed(function() {
 			return self.attacksLoaded() ? $.grep(self.attacks(), function(a, i) { return a.fatal && a.unprovoked; }).length : widget.loadingMessage;
 		    })
@@ -210,26 +259,38 @@
 	    ko.applyBindings(widget.vm, widget.element[0]);
 
 	    widget._setupEventHandlers();
+
+	    widget._setupIncidentTypeSelector();
+
 	    widget._getAttacks();
+	},
+
+	_setupIncidentTypeSelector() {
+	    var widget = this;
+	    var $selector = $("#incident-type-selector");
+	    $selector.multiselect({
+		// onChange: function(option, checked, select) {},
+		buttonWidth: "20em",
+		allSelectedText: "All Incident Types",
+		includeSelectAllOption: true
+	    });
 	},
 
 	_setupEventHandlers: function() {
 	    var widget = this;
 
-	    $(".btn-group.filter-on-fatal .dropdown-menu a").on("click.placeWidget", function(event) {
+	    $(".btn-group.filter-on-fatal .dropdown-menu a").off("click.placeWidget").on("click.placeWidget", function(event) {
 		event.preventDefault();
 		var newStateKey = event.target.id.replace(/-/g, "_");
 		widget.vm.filterDropdownFatalState(widget.vm.filterStatuses_fatal[newStateKey]);
 	    });
 
-	    $(".btn-group.filter-on-provoked .dropdown-menu a").on("click.placeWidget", function(event) {
-		event.preventDefault();
-		var newStateKey = event.target.id.replace(/-/g, "_");
-		widget.vm.filterDropdownProvokedState(widget.vm.filterStatuses_provoked[newStateKey]);
-	    });
-
 	    Utils.initResizeHandler("placeWidget", function() {
 		widget._drawCharts();
+	    });
+
+	    widget.vm.attacksFiltered.subscribe(function() {
+		$(".incident-list").incidentListTable();
 	    });
 	},
 
@@ -251,32 +312,25 @@
 	_drawCharts: function() {
 	    var widget = this;
 	    widget._drawPieChart(
-		"Fatal",
-		"#fatal",
-		[{ type: "string", name: "Type" }, { type: "number", name: "Value" }],
-		[
-		    ['Fatal', widget.vm.summaryStats.fatalCount()],
-		    ['Non-Fatal', widget.vm.summaryStats.totalCount() - widget.vm.summaryStats.fatalCount()]
-		]
-	    );
-
-	    widget._drawPieChart(
-		"Unprovoked",
-		"#unprovoked",
+		"Incident Type",
+		"#incident-type",
 		[{ type: "string", name: "Type" }, { type: "number", name: "Value" }],
 		[
 		    ['Unprovoked', widget.vm.summaryStats.unprovokedCount()],
-		    ['Provoked', widget.vm.summaryStats.totalCount() - widget.vm.summaryStats.unprovokedCount()]
+		    ['Provoked', widget.vm.summaryStats.provokedCount()],
+		    ['Invalid', widget.vm.summaryStats.invalidCount()],
+		    ['Boating', widget.vm.summaryStats.boatingCount()],
+		    ['Sea Disaster', widget.vm.summaryStats.seaDisasterCount()]
 		]
 	    );
 
 	    widget._drawPieChart(
-		"Fatal and Unprovoked",
+		"Unprovoked: fatal and non-fatal",
 		"#fatal-and-unprovoked",
 		[{ type: "string", name: "Type" }, { type: "number", name: "Value" }],
 		[
-		    ['Fatal and Unprovoked', widget.vm.summaryStats.fatalAndUnprovokedCount()],
-		    ['Other', widget.vm.summaryStats.totalCount() - widget.vm.summaryStats.fatalAndUnprovokedCount()]
+		    ['Unprovoked and fatal', widget.vm.summaryStats.fatalAndUnprovokedCount()],
+		    ['Unprovoked and non-fatal', widget.vm.summaryStats.unprovokedCount() - widget.vm.summaryStats.fatalAndUnprovokedCount()]
 		]
 	    );
 	    
@@ -395,7 +449,7 @@
 	    $(".order-countries .by-total").on("click.placesListWidget", function(e) {
 		$(".order-countries button").removeClass("active");
 		$('div.country-list-item').sortElements(function(a, b) {
-		    return $(a).data().countTotal > $(b).data().countTotal ? -1 : 1;
+		    return $(a).data().countUnprovoked > $(b).data().countUnprovoked ? -1 : 1;
 		});
 		$(e.target).addClass("active");
 	    });
@@ -542,7 +596,9 @@
 
     $.fn.incidentListTable = function() {
 	var element = this;
-	$(element).find("tbody tr td a").on("click.incidentListTable", function(event) {
+	$(element).find("tbody tr td a")
+	    .off("click.incidentListTable")
+	    .on("click.incidentListTable", function(event) {
 	    event.stopPropagation();
 	});
 

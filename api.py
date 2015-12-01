@@ -29,7 +29,7 @@ class Countries(ApiHandler):
                 "name": c.name,
                 "normalisedName": c.urlPart,
                 "counts": {
-                    "total": c.count_total,
+                    "totalIncludingIrrelevant": c.count_total_including_irrelevant,
                     "unprovoked": c.count_unprovoked,
                     "fatalAndUnprovoked": c.count_fatal_and_unprovoked
                     }
@@ -77,6 +77,7 @@ class Attacks(ApiHandler):
                 "area": attack.area,
                 "areaNormalised": attack.area_normalised,
                 "location": attack.location,
+                "incidentType": attack.incident_type,
                 "activity": attack.activity,
                 "unprovoked": attack.unprovoked,
                 "fatal": attack.fatal

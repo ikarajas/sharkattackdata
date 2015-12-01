@@ -181,8 +181,8 @@ class SharkAttacksByLocationPage(BasePage):
             "subtemplate": self.resolveTemplatePath("places.html"),
             "title": "Shark Attacks by Country",
             "meta_description": "A list of countries in which shark attacks are recorded. Click on a country to show more information.",
-            "highest_total": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)[0].count_total,
-            "countries": sorted(self.helper.getCountries(), key=lambda c: c.count_total, reverse=True)
+            "highest_total": sorted(self.helper.getCountries(), key=lambda c: c.count_unprovoked, reverse=True)[0].count_unprovoked,
+            "countries": sorted(self.helper.getCountries(), key=lambda c: c.count_unprovoked, reverse=True)
             }
 
 class AttackPage(BasePage):
@@ -408,7 +408,7 @@ class PostSharkAttacks(JsonServiceHandler):
                                   investigator_or_source = attackrow[13],
                                   date_is_approximate = attackrow[14] == "True",
                                   fatal = attackrow[15] == "True",
-                                  provoked = attackrow[16] == "True")
+                                  incident_type = attackrow[19])
             attacksToStore.append(toStore)
         logging.info("put_multi() started.")
         ndb.put_multi(attacksToStore)

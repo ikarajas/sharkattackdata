@@ -29,11 +29,11 @@ class SharkAttackRepository:
 
     def readAttacksFromCache(self, key):
         summary = self.readAttackSummary(key)
-        if summary is None or summary.totalCount is None:
+        if summary is None or summary.totalCountAll is None:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
             return attacks
         
-        numParts = int(math.ceil(float(summary.totalCount)/float(self._attacksPerPart)))
+        numParts = int(math.ceil(float(summary.totalCountAll)/float(self._attacksPerPart)))
         attacks = []
         for i in range(numParts):
             cacheKey = self.getAttacksPartKey(key, i)
@@ -48,7 +48,7 @@ class SharkAttackRepository:
         summary = PlaceSummary(attacks)
         if not memcache.set(self.getPlaceSummaryKey(key), summary):
             raise Exception("Unable to write attack parent node summary to memcache.")
-        numParts = int(math.ceil(float(summary.totalCount)/float(self._attacksPerPart)))
+        numParts = int(math.ceil(float(summary.totalCountAll)/float(self._attacksPerPart)))
         for i in range(numParts):
             cacheKey = self.getAttacksPartKey(key, i)
             #logging.info("Writing to cache: %s" % cacheKey)
@@ -60,7 +60,7 @@ class SharkAttackRepository:
         query = SharkAttack.query(ancestor=key).order(SharkAttack.date)
         attacks = query.fetch(
             projection=[SharkAttack.date, SharkAttack.date_orig, SharkAttack.date_userfriendly, SharkAttack.date_is_approximate,
-                        SharkAttack.area, SharkAttack.location,SharkAttack.activity, SharkAttack.fatal, SharkAttack.provoked])
+                        SharkAttack.area, SharkAttack.location,SharkAttack.activity, SharkAttack.fatal, SharkAttack.incident_type])
         summary = self.writeAttacksToCache(key, attacks)
         return summary, attacks
 

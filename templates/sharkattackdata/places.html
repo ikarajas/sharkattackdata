@@ -10,26 +10,22 @@
   <div class="row">
     <div class="btn-group pull-right order-countries">
       <button type="button" class="btn btn-default by-name">Order by name</button>
-      <button type="button" class="btn btn-default by-total active">Order by total</button>
+      <button type="button" class="btn btn-default by-total active">Order by count</button>
     </div>
   </div>
   <div class="row">
     <div class="list-group">
       {% for country in countries %}
-      <div class="country-list-item" data-country-name="{{ country.name }}" data-count-total="{{ country.count_total }}">
+      <div class="country-list-item" data-country-name="{{ country.name }}" data-count-unprovoked="{{ country.count_unprovoked }}">
 	<a class="list-group-item" href="/country-overview/{{country.urlPart}}">
 	  <h4 class="list-group-item-heading">{{ country.name }}</h4>
 	  <p class="list-group-item-text">
-	    <span class="summary-figure">Total <span class="badge indicator-total">{{ country.count_total }}</span></span>
-	    <span class="summary-figure">Provoked <span class="badge indicator-provoked">{{ country.count_provoked }}</span></span>
-	    <span class="summary-figure">Unprovoked <span class="badge indicator-unprovoked">{{ country.count_unprovoked }}</span></span>
+	    <span class="summary-figure">Total Unprovoked <span class="badge indicator-unprovoked">{{ country.count_unprovoked }}</span></span>
 	    <span class="summary-figure">Non-fatal and unprovoked <span class="badge indicator-non-fatal-and-unprovoked">{{ country.count_non_fatal_and_unprovoked }}</span></span>
-	    <span class="summary-figure">Fatal <span class="badge indicator-fatal">{{ country.count_fatal }}</span></span>
 	    <span class="summary-figure">Fatal and unprovoked <span class="badge indicator-fatal-and-unprovoked">{{ country.count_fatal_and_unprovoked }}</span></span>
 	  </p>
 	  
 	  <div class="progress">
-	    <div class="progress-bar indicator-provoked" style="width: {{ country.count_provoked / highest_total * 100 }}%"></div>
 	    <div class="progress-bar indicator-non-fatal-and-unprovoked" style="width: {{ country.count_non_fatal_and_unprovoked / highest_total * 100 }}%"></div>
 	    <div class="progress-bar indicator-fatal-and-unprovoked" style="width: {{ country.count_fatal_and_unprovoked / highest_total * 100 }}%"></div>
 	  </div>
