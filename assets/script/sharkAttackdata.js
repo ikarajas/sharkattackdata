@@ -68,6 +68,9 @@
 	colorMidRangeIncidents: "#336600",
 	colorHighlight: "#DF691A",
 	colorNeutral: "#5C8270",
+	colorNeutralShade0: "#75A590",
+	colorNeutralShade1: "#8AC3AA",
+	colorNeutralShade2: "#AEF6D6",
 	colorNeutralContrast: "#C2EDD9",
 	colorFatal: "#B50000",
 	colorFatalContrast: "#ED0000",
@@ -398,6 +401,9 @@
 			    slices: {
 				0: { color: Constants.colorFatal },
 				1: { color: Constants.colorNeutral },
+				2: { color: Constants.colorNeutralShade0 },
+				3: { color: Constants.colorNeutralShade1 },
+				4: { color: Constants.colorNeutralShade2 },
 			    }
 			  };
 	    

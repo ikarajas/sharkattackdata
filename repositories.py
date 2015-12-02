@@ -86,13 +86,13 @@ class SharkAttackRepository:
         return val
         
 
-    def __getLastNAttacks(self, number, ancestorKey=None, provoked=False):
+    def __getLastNAttacks(self, number, ancestorKey=None):
         return SharkAttack \
             .query(
             ndb.AND(
                 SharkAttack.date != None,
                 SharkAttack.date > datetime.date.today() - datetime.timedelta(days=365),
-                SharkAttack.provoked == provoked),
+                SharkAttack.unprovoked == True, SharkAttack.valid == True),
             ancestor=ancestorKey) \
             .order(-SharkAttack.date) \
             .fetch(number,
