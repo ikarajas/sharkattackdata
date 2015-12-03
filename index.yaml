@@ -29,6 +29,20 @@ indexes:
   - name: gsaf_case_number
 
 - kind: SharkAttack
+  properties:
+  - name: unprovoked
+  - name: valid
+  - name: date
+    direction: desc
+  - name: area
+  - name: area_normalised
+  - name: country
+  - name: countryNormalised
+  - name: date_userfriendly
+  - name: fatal
+  - name: gsaf_case_number
+
+- kind: SharkAttack
   ancestor: yes
   properties:
   - name: date
