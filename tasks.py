@@ -7,9 +7,9 @@ if __name__ == "__main__":
 import os, webapp2, logging, datetime
 from xml.dom.minidom import Text, Element, Document
 
-from models import SharkAttack, Country, Country, Area
+from models import SharkAttack, Country, Country, Area, PlaceSummary
 from utils import StringUtils
-from repositories import SharkAttackRepository, CountryRepository, AreaRepository, PlaceSummary
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
 
 class SummaryGenerator():
     def __init__(self):

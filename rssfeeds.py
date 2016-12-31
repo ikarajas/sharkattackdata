@@ -5,7 +5,7 @@ from xml.dom.minidom import Text, Element, Document
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories import SharkAttackRepository, CountryRepository, AreaRepository
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
 
 class FeedItem:
     title = None
