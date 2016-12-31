@@ -7,7 +7,7 @@ from google.appengine.api import memcache, users
 from google.appengine.ext import ndb
 
 from models import Area, Country, SharkAttack
-from repositories import SiteInformationRepository
+from repositories.general import SiteInformationRepository
 from utils import StringUtils
 from siteinformation import SiteInformation
 

@@ -6,7 +6,8 @@ import webapp2
 from custom_exceptions import PageNotFoundException
 from constants import Constants
 from helper import Helper
-from repositories import SharkAttackRepository, SiteInformationRepository
+from repositories.general import SiteInformationRepository
+from repositories.data.repository_ndb import SharkAttackRepository
 from siteinformation import SiteInformation
 
 # FIXME - Duplication

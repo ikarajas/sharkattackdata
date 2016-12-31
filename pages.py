@@ -2,7 +2,8 @@ from google.appengine.ext import ndb #Shouldn't need this!
 
 from basepage import *
 from models import Country, Area, SharkAttack
-from repositories import SharkAttackRepository, CountryRepository, SiteInformationRepository
+from repositories.general import SiteInformationRepository
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository
 
 
 class MainPage(BasePage):

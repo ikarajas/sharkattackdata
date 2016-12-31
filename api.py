@@ -4,7 +4,7 @@ import os, webapp2, logging, datetime, json
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories import CountryRepository, AreaRepository, SharkAttackRepository
+from repositories.data.repository_ndb import CountryRepository, AreaRepository, SharkAttackRepository
 
 import google.appengine.ext.ndb.model
 

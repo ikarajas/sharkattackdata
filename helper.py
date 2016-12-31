@@ -1,6 +1,6 @@
 import os
 
-from repositories import CountryRepository
+from repositories.data.repository_ndb import CountryRepository
 from utils import StringUtils
 
 class Helper():
