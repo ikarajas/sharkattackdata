@@ -5,7 +5,7 @@ from xml.dom.minidom import Text, Element, Document
 
 from models import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
 
 class FeedItem:
     title = None
@@ -32,6 +32,7 @@ class RssFeed(webapp2.RequestHandler):
         self._sharkAttackRepository = SharkAttackRepository()
         self._countryRepository = CountryRepository()
         self._areaRepository = AreaRepository()
+        self._dataHelper = DataHelper()
         self._baseUrl = "%s://%s/%s" % (self._urlScheme, self._hostName, "gsaf/" if isGsaf else "")
         self._feedsBaseUrl = "%sfeeds/" % self._baseUrl
 
@@ -132,7 +133,7 @@ class SharkAttackFeed(RssFeed):
             node = self._areaRepository.getArea(countryKey, areaKey)
             if node is None:
                 self.abort(404)
-            parentCountry = node.key.parent().get()
+            parentCountry = self._dataHelper.getNodeParent(node)
             title = "Shark Attacks in %s, %s" % (node.name, parentCountry.name)
 
         link = self._baseUrl + "place"
@@ -140,6 +141,12 @@ class SharkAttackFeed(RssFeed):
         self._configure(title, link, title)
         for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):
             attackTitle = "%s at %s, %s" % (attack.date_userfriendly, attack.location, attack.area)
-            yield FeedItem(attackTitle, "%sattack/%s/%s/%s" % (self._baseUrl, attack.countryNormalised, attack.area_normalised, attack.key.id()),
-                           attackTitle)
+            yield FeedItem(
+                attackTitle,
+                "%sattack/%s/%s/%s" % (
+                    self._baseUrl,
+                    attack.countryNormalised,
+                    attack.area_normalised,
+                    self._dataHelper.getNodeId(attack)),
+                attackTitle)
     

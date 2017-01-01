@@ -2,7 +2,6 @@ import os, math
 import webapp2, json, cgi, logging, datetime, urllib
 
 from google.appengine.api import memcache, users
-from google.appengine.ext import ndb
 
 from utils import StringUtils
 from siteinformation import SiteInformation
