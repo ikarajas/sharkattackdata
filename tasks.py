@@ -7,7 +7,8 @@ if __name__ == "__main__":
 import os, webapp2, logging, datetime
 from xml.dom.minidom import Text, Element, Document
 
-from models import SharkAttack, Country, Country, Area, PlaceSummary
+from models.common import PlaceSummary
+from models.ndb import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
 

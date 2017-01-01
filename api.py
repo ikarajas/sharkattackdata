@@ -2,7 +2,7 @@
 
 import os, webapp2, logging, datetime, json
 
-from models import SharkAttack, Country, Country, Area
+from models.ndb import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories.data.repository_ndb import CountryRepository, AreaRepository, SharkAttackRepository
 

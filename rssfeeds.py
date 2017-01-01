@@ -3,7 +3,7 @@
 import os, webapp2, logging, datetime
 from xml.dom.minidom import Text, Element, Document
 
-from models import SharkAttack, Country, Country, Area
+from models.ndb import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
 

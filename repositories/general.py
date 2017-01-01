@@ -3,7 +3,7 @@ import logging
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
-from models import SingletonStore
+from models.ndb import SingletonStore
 from siteinformation import SiteInformation
 
 class SiteInformationRepository:
