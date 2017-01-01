@@ -1,5 +1,4 @@
 import os
-import jinja2
 import urllib
 import webapp2
 
@@ -7,20 +6,17 @@ from custom_exceptions import PageNotFoundException
 from constants import Constants
 from helper import Helper
 from repositories.general import SiteInformationRepository
-from repositories.data.repository_ndb import SharkAttackRepository
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
 from siteinformation import SiteInformation
-
-# FIXME - Duplication
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-    extensions=['jinja2.ext.autoescape'],
-    autoescape=True)
+from error_handlers import ErrorHandlers
 
 class BasePage(webapp2.RequestHandler):
     def __init__(self, request, response):
         self.initialize(request, response)
         self.helper = Helper()
         self._siteInformationRepository = SiteInformationRepository()
+        self._countryRepository = CountryRepository()
+        self._areaRepository = AreaRepository()
         self._sharkAttackRepository = SharkAttackRepository()
         self._pageTemplate = "main.html"
         self._host = os.environ.get("HTTP_HOST")
@@ -67,7 +63,7 @@ class BasePage(webapp2.RequestHandler):
         for key, value in pageDict.iteritems():
             template_values[key] = value
 
-        template = JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath(self._pageTemplate))
+        template = Constants.JINJA_ENVIRONMENT.get_template(self.resolveTemplatePath(self._pageTemplate))
         self.response.write(template.render(template_values))
 
     def getBreadcrumbData(self, node):

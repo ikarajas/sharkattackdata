@@ -98,6 +98,26 @@ class SharkAttackRepository:
                    projection=[SharkAttack.date, SharkAttack.date_userfriendly, SharkAttack.country, SharkAttack.area,
                                SharkAttack.countryNormalised, SharkAttack.area_normalised, SharkAttack.gsaf_case_number, SharkAttack.fatal])
 
+    def getFullyResolvedAttack(self, countryId, areaId, attackId):
+        key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
+        attack = key.get()
+
+        if attack is None:
+            attackById = SharkAttack.query(SharkAttack.gsaf_case_number == attackId).get()
+            if attackById is not None:
+                return FullyResolvedAttackResponse(
+                    FullyResolvedAttackStatus.FoundInDifferentLocation,
+                    attackById.countryNormalised,
+                    attackById.area_normalised,
+                    attackById)
+            return FullyResolvedAttackResponse(FullyResolvedAttackStatus.NotFound, None, None, None)
+
+        return FullyResolvedAttackResponse(
+            FullyResolvedAttackStatus.Found,
+            attack.countryNormalised,
+            attack.area_normalised,
+            attack)
+
 
 class CountryRepository:
     def getCountries(self):
@@ -130,3 +150,15 @@ class AreaRepository:
         areas = query.fetch()
         return areas
 
+class FullyResolvedAttackStatus:
+	Found, NotFound, FoundInDifferentLocation = range(3)
+
+class FullyResolvedAttackResponse:
+	"""
+	Response DTO for AttackRepository.getFullyResolvedAttack()
+	"""
+	def __init__(self, status, countryId, areaId, attack):
+		self.status = status
+		self.countryId = countryId
+		self.areaId = areaId
+		self.attack = attack

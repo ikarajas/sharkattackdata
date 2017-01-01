@@ -1,9 +1,7 @@
-from google.appengine.ext import ndb #Shouldn't need this!
-
 from basepage import *
 from models import Country, Area, SharkAttack
 from repositories.general import SiteInformationRepository
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository
+from repositories.data.repository_ndb import SharkAttackRepository, FullyResolvedAttackStatus, FullyResolvedAttackResponse
 
 
 class MainPage(BasePage):
@@ -63,26 +61,22 @@ class AttackPage(BasePage):
         return "/".join(path)
 
     def handle(self, countryId, areaId, attackId):
-        #TODO: replace with repository method
-        key = ndb.Key("Country", countryId, "Area", areaId, "SharkAttack", attackId)
-        attack = key.get()
+        response = self._sharkAttackRepository.getFullyResolvedAttack(countryId, areaId, attackId)
 
-        if attack is None:
-            attackById = SharkAttack.query(SharkAttack.gsaf_case_number == attackId).get()
-            if attackById is not None:
-                raise PageNotFoundException(correctPath=self.getUrlForAttack(attackById, False))
+        if response.status == FullyResolvedAttackStatus.NotFound:
             raise PageNotFoundException()
-
-        area = attack.key.parent().get()
-        country = area.key.parent().get()
-        
-        return {
+        elif response.status == FullyResolvedAttackStatus.FoundInDifferentLocation:
+            raise PageNotFoundException(correctPath=self.getUrlForAttack(response.attack, False))
+        else:
+            area = self._areaRepository.getArea(response.countryId, response.areaId)
+            country = self._countryRepository.getCountry(response.countryId)
+            return {
             "subtemplate": self.resolveTemplatePath("attack.html"),
-            "title": "Shark attack at %s in %s, %s" % (attack.location, area.name, country.name),
+            "title": "Shark attack at %s in %s, %s" % (response.attack.location, area.name, country.name),
             "meta_description": "Details of a shark attack that occurred %s at %s in %s, %s." % \
-                (attack.date_userfriendly, attack.location, area.name, country.name),
-            "attack": attack,
-            "breadcrumb_data": self.getBreadcrumbData(attack)
+                (response.attack.date_userfriendly, response.attack.location, area.name, country.name),
+            "attack": response.attack,
+            "breadcrumb_data": self.getBreadcrumbData(response.attack)
             }
 
 class LocationPage(BasePage):
