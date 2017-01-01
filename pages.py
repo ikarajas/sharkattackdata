@@ -1,7 +1,8 @@
 from basepage import *
 from models import Country, Area, SharkAttack
 from repositories.general import SiteInformationRepository
-from repositories.data.repository_ndb import SharkAttackRepository, FullyResolvedAttackStatus, FullyResolvedAttackResponse
+from repositories.data.common import *
+from repositories.data.repository_ndb import SharkAttackRepository
 
 
 class MainPage(BasePage):

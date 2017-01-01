@@ -12,3 +12,6 @@ class AreaRepository:
 	def __init__(self):
 		pass
 
+class DataHelper:
+    def __init__(self):
+        pass
