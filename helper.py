@@ -1,11 +1,12 @@
 import os
 
-from repositories.data.repository_ndb import CountryRepository
+from repositories.data.repository_ndb import CountryRepository, DataHelper
 from utils import StringUtils
 
 class Helper():
     def __init__(self):
         self._countryRepository = CountryRepository()
+        self._dataHelper = DataHelper()
 
     def uniqueify(self, seq):
         seen = set()
@@ -29,10 +30,11 @@ class Helper():
             path = os.path.join(path, "gsaf")
         if node is None:
             return path if isGsaf else os.path.join(path, "place")
-        if node._get_kind() == "Area":
-            return os.path.join(path, "place", node.key.parent().get().key.id(), node.key.id())
-        if node._get_kind() == "Country":
-            return os.path.join(path, "place" if isGsaf else "country-overview", node.key.id())
+        if self._dataHelper.nodeIsArea(node):
+            countryNode = self._dataHelper.getNodeParent(node)
+            return os.path.join(path, "place", self._dataHelper.getNodeId(countryNode), self._dataHelper.getNodeId(node))
+        if self._dataHelper.nodeIsCountry(node):
+            return os.path.join(path, "place" if isGsaf else "country-overview", self._dataHelper.getNodeId(node))
 
     def resolveTemplatePath(self, relativePath, isGsaf):
         parts = ["templates"]

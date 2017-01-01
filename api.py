@@ -49,7 +49,6 @@ class Attacks(ApiHandler):
         except KeyError:
             pass
 
-        parentCountry = None
         if areaKey is None:
             node = self._countryRepository.getCountry(countryKey)
             if node is None:
@@ -58,7 +57,6 @@ class Attacks(ApiHandler):
             node = self._areaRepository.getArea(countryKey, areaKey)
             if node is None:
                 return []
-            parentCountry = node.key.parent().get()
 
         retval = []
         for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):

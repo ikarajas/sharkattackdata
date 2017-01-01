@@ -6,7 +6,7 @@ from custom_exceptions import PageNotFoundException
 from constants import Constants
 from helper import Helper
 from repositories.general import SiteInformationRepository
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
+from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
 from siteinformation import SiteInformation
 from error_handlers import ErrorHandlers
 
@@ -18,6 +18,7 @@ class BasePage(webapp2.RequestHandler):
         self._countryRepository = CountryRepository()
         self._areaRepository = AreaRepository()
         self._sharkAttackRepository = SharkAttackRepository()
+        self._dataHelper = DataHelper()
         self._pageTemplate = "main.html"
         self._host = os.environ.get("HTTP_HOST")
         self._urlScheme = os.environ.get("wsgi.url_scheme")
@@ -74,18 +75,14 @@ class BasePage(webapp2.RequestHandler):
             site = "gsaf"
         while node is not None:
             if firstRun:
-                if node._get_kind() == "SharkAttack":
-                    retval.append({ "name": node.key.id(), "url": "" })
+                if self._dataHelper.nodeIsSharkAttack(node):
+                    retval.append({ "name": self._dataHelper.getNodeId(node), "url": "" })
                 else:
-                    retval.append({ "name": node.name, "url": "" })
+                    retval.append({ "name": self._dataHelper.getNodeName(node), "url": "" })
             else:
                 retval.append({ "name": node.name, "url": self.helper.getUrlForNode(site, node) })
             firstRun = False
-            parentKey = node.key.parent()
-            if parentKey is None:
-                node = None
-            else:
-                node = parentKey.get()
+            node = self._dataHelper.getNodeParent(node)
 
         retval.append({ "name": "Countries", "url": "" if firstRun else self.helper.getUrlForNode(site, None) })
 

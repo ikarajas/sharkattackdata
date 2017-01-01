@@ -150,6 +150,30 @@ class AreaRepository:
         areas = query.fetch()
         return areas
 
+class DataHelper:
+    def nodeIsSharkAttack(self, node):
+        return node._get_kind() == "SharkAttack"
+
+    def nodeIsCountry(self, node):
+        return node._get_kind() == "Country"
+
+    def nodeIsArea(self, node):
+        return node._get_kind() == "Area"
+
+    def getNodeId(self, node):
+        return node.key.id()
+
+    def getNodeName(self, node):
+        return node.name
+
+    def getNodeParent(self, node):
+        parentKey = node.key.parent()
+        if parentKey is None:
+            return None
+        else:
+            return parentKey.get()
+
+
 class FullyResolvedAttackStatus:
 	Found, NotFound, FoundInDifferentLocation = range(3)
 
