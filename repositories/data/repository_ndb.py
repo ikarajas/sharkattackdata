@@ -3,7 +3,8 @@ import os, math, logging, datetime
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
-from models import SharkAttack, Country, Country, Area, PlaceSummary
+from models.common import PlaceSummary
+from models.ndb import SharkAttack, Country, Country, Area
 from utils import StringUtils
 from repositories.data.common import *
 

@@ -1,5 +1,5 @@
 from basepage import *
-from models import Country, Area, SharkAttack
+from models.ndb import Country, Area, SharkAttack
 from repositories.general import SiteInformationRepository
 from repositories.data.common import *
 from repositories.data.repository_ndb import SharkAttackRepository

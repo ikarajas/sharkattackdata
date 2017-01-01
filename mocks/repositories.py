@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
 from google.appengine.ext import ndb
 
-from models import Country, Area, SharkAttack
+from models.ndb import Country, Area, SharkAttack
 
 sys.path.append(os.path.abspath("..")) #yuck
 from utils import StringUtils
