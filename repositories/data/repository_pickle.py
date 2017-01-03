@@ -1,5 +1,9 @@
 import pickle
 
+class DataStore:
+    attacks_list = None
+    countries_list = None
+
 class SharkAttackRepository:
 	def __init__(self):
 		pass

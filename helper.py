@@ -8,11 +8,6 @@ class Helper():
         self._countryRepository = CountryRepository()
         self._dataHelper = DataHelper()
 
-    def uniqueify(self, seq):
-        seen = set()
-        seen_add = seen.add
-        return [x for x in seq if x not in seen and not seen_add(x)]
-
     def getCountries(self):
         return self._countryRepository.getCountries()
 
@@ -44,4 +39,5 @@ class Helper():
             parts.append("sharkattackdata")
         parts.append(relativePath)
         return "/".join(parts)
+
 
