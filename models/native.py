@@ -46,6 +46,10 @@ class SharkAttack(DataNode):
         self.fatalUserFriendly = "Fatal" if self.fatal else "Not fatal"
         self.fatalYesOrNo = "Yes" if self.fatal else "No"
 
+    @property
+    def id(self):
+        return self.gsaf_case_number
+
     def getUserFriendlyDate(self, dt, date_orig):
         if dt is None:
             return date_orig  or "Unknown"
@@ -62,11 +66,20 @@ class Country(DataNode):
     def __repr__(self):
         return self.name
 
-    def __init__(self, name, urlPart, place_summary):
+    def __init__(self, name, urlPart):
         self.name = name
         self.urlPart = urlPart
-        self.place_summary = place_summary
-        self.areas = None
+        self.place_summary = None
+        self.areas_dict = {}
+        self.attacks = []
+
+    @property
+    def id(self):
+        return self.urlPart
+
+    @property
+    def areas(self):
+        return [self.areas_dict[y] for y in self.areas_dict.keys()]
 
         #These have the potential to return incorrect data if place_summary is not updated.
         # count_total_including_irrelevant = ndb.ComputedProperty(lambda c: 0 if not c.place_summary else c.place_summary.totalCountAll)
@@ -83,7 +96,11 @@ class Area(DataNode):
         self.country = country
         self.name = name
         self.urlPart = urlPart
+        self.attacks = []
 
+    @property
+    def id(self):
+        return self.urlPart
 
 if __name__ == "__main__":
     print SharkAttack()

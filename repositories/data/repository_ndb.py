@@ -13,23 +13,23 @@ class SharkAttackRepository:
     def __init__(self):
         self._attacksPerPart = 1000
 
-    def getAttackNodeId(self, key):
+    def __getAttackNodeId(self, key):
         return "|".join(key.flat())
 
-    def getPlaceSummaryKey(self, key):
-        return "attackPlaceSummary_%s" % self.getAttackNodeId(key)
+    def __getPlaceSummaryKey(self, key):
+        return "attackPlaceSummary_%s" % self.__getAttackNodeId(key)
 
-    def getAttacksPartKey(self, key, part):
-        return "attacks_%s_part_%s" % (self.getAttackNodeId(key), part)
+    def __getAttacksPartKey(self, key, part):
+        return "attacks_%s_part_%s" % (self.__getAttackNodeId(key), part)
 
-    def readAttackSummary(self, key):
-        summary = memcache.get(self.getPlaceSummaryKey(key))
+    def __readAttackSummary(self, key):
+        summary = memcache.get(self.__getPlaceSummaryKey(key))
         if summary is None:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
         return summary
 
-    def readAttacksFromCache(self, key):
-        summary = self.readAttackSummary(key)
+    def __readAttacksFromCache(self, key):
+        summary = self.__readAttackSummary(key)
         if summary is None or summary.totalCountAll is None:
             summary, attacks = self.__getDescendantAttackDataInternal(key)
             return attacks
@@ -37,7 +37,7 @@ class SharkAttackRepository:
         numParts = int(math.ceil(float(summary.totalCountAll)/float(self._attacksPerPart)))
         attacks = []
         for i in range(numParts):
-            cacheKey = self.getAttacksPartKey(key, i)
+            cacheKey = self.__getAttacksPartKey(key, i)
             theseAttacks = memcache.get(cacheKey)
             if theseAttacks is None:
                 #Should we delete the place summary if this happens?
@@ -45,13 +45,13 @@ class SharkAttackRepository:
             attacks.extend(theseAttacks)
         return attacks
         
-    def writeAttacksToCache(self, key, attacks):
+    def __writeAttacksToCache(self, key, attacks):
         summary = PlaceSummary(attacks)
-        if not memcache.set(self.getPlaceSummaryKey(key), summary):
+        if not memcache.set(self.__getPlaceSummaryKey(key), summary):
             raise Exception("Unable to write attack parent node summary to memcache.")
         numParts = int(math.ceil(float(summary.totalCountAll)/float(self._attacksPerPart)))
         for i in range(numParts):
-            cacheKey = self.getAttacksPartKey(key, i)
+            cacheKey = self.__getAttacksPartKey(key, i)
             #logging.info("Writing to cache: %s" % cacheKey)
             if not memcache.set(cacheKey, attacks[(i*self._attacksPerPart):((i+1)*self._attacksPerPart)]):
                 raise Exception("Unable to write attack place summary to memcache.")
@@ -62,17 +62,17 @@ class SharkAttackRepository:
         attacks = query.fetch(
             projection=[SharkAttack.date, SharkAttack.date_orig, SharkAttack.date_userfriendly, SharkAttack.date_is_approximate,
                         SharkAttack.area, SharkAttack.location,SharkAttack.activity, SharkAttack.fatal, SharkAttack.incident_type])
-        summary = self.writeAttacksToCache(key, attacks)
+        summary = self.__writeAttacksToCache(key, attacks)
         return summary, attacks
 
     def getDescendantAttacksForCountry(self, countryId):
-        return self.readAttacksFromCache(ndb.Key("Country", countryId))
+        return self.__readAttacksFromCache(ndb.Key("Country", countryId))
 
     def getDescendantAttacksForKey(self, key):
-        attacks = self.readAttacksFromCache(key)
+        attacks = self.__readAttacksFromCache(key)
 
         if attacks is None:
-            logging.info("Cache miss: %s" % self.getAttackNodeId(key))
+            logging.info("Cache miss: %s" % self.__getAttackNodeId(key))
             summary, attacks = self.__getDescendantAttackDataInternal(key)
 
         return attacks

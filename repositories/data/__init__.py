@@ -1,33 +1,42 @@
 import pickle
 
 from blobs import attacks
+from models.common import PlaceSummary
 from models.native import SharkAttack, Country, Area
 from repository_pickle import DataStore
 from utils import MiscUtils
 
-input_attacks_dict = pickle.loads(attacks.data.decode("base64"))
-DataStore.attacks_list = [SharkAttack(y) for y in input_attacks_dict]
-#TODO: create attacks_dict
 
-country_tuples = MiscUtils.uniqueify([(y.countryNormalised, y.country) for y in DataStore.attacks_list])
-area_tuples = MiscUtils.uniqueify([(y.countryNormalised, y.area_normalised, y.area) for y in DataStore.attacks_list])
+def process_attack_country(attack):
+    if not attack.countryNormalised in DataStore.countries_dict:
+        DataStore.countries_dict[attack.countryNormalised] = Country(attack.country, attack.countryNormalised)
+    DataStore.countries_dict[attack.countryNormalised].attacks.append(attack)
 
-country_objects = []
+def process_attack_area(attack):
+    country = DataStore.countries_dict[attack.countryNormalised]
+    if not attack.area_normalised in country.areas_dict:
+        country.areas_dict[attack.area_normalised] = Area(country, attack.area, attack.area_normalised)
+    area = country.areas_dict[attack.area_normalised]
+    attack.parent = area
+    area.attacks.append(attack)
 
-for country_tuple in country_tuples:
-    country_normalised = country_tuple[0]
-    country_name = country_tuple[1]
-    c = Country(country_name, country_normalised, None) #TODO: add place summary
-    country_areas = []
-    for area_tuple in [y for y in area_tuples if y[0] == country_normalised]:
-        area_normalised = area_tuple[1]
-        area_name = area_tuple[2]
-        country_areas.append(Area(c, area_name, area_normalised))
-    c.areas = country_areas
-    country_objects.append(c)
+def generate_place_summary(country):
+    ps = PlaceSummary(country.attacks)
+    country.place_summary = ps
+
+def process():
+    input_attacks_list = pickle.loads(attacks.data.decode("base64"))
+    DataStore.attacks_list = [SharkAttack(y) for y in input_attacks_list]
+
+    for a in DataStore.attacks_list:
+        DataStore.attacks_dict[a.gsaf_case_number] = a
+        process_attack_country(a)
+        process_attack_area(a)
+
+    for c in DataStore.get_countries_list():
+        generate_place_summary(c)
 
 
-for c in country_objects:
-    print c
-    for a in c.areas:
-        print u' '.join((" - ", a.name)).encode('utf-8').strip()
+process()
+
+
