@@ -3,9 +3,9 @@
 import os, webapp2, logging, datetime
 from xml.dom.minidom import Text, Element, Document
 
-from models.ndb import SharkAttack, Country, Country, Area
+from models.native import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
+from repositories.data.repository_pickle import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
 
 class FeedItem:
     title = None
@@ -139,7 +139,7 @@ class SharkAttackFeed(RssFeed):
         link = self._baseUrl + "place"
 
         self._configure(title, link, title)
-        for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):
+        for attack in self._sharkAttackRepository.getDescendantAttacksForNode(node):
             attackTitle = "%s at %s, %s" % (attack.date_userfriendly, attack.location, attack.area)
             yield FeedItem(
                 attackTitle,

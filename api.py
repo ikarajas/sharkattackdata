@@ -2,9 +2,9 @@
 
 import os, webapp2, logging, datetime, json
 
-from models.ndb import SharkAttack, Country, Country, Area
+from models.native import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories.data.repository_ndb import CountryRepository, AreaRepository, SharkAttackRepository
+from repositories.data.repository_pickle import CountryRepository, AreaRepository, SharkAttackRepository
 
 import google.appengine.ext.ndb.model
 
@@ -59,7 +59,7 @@ class Attacks(ApiHandler):
                 return []
 
         retval = []
-        for attack in self._sharkAttackRepository.getDescendantAttacksForKey(node.key):
+        for attack in self._sharkAttackRepository.getDescendantAttacksForNode(node):
             try:
                 dateTemp = None if attack.date_is_approximate else attack.date
             except google.appengine.ext.ndb.model.UnprojectedPropertyError as e:

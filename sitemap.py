@@ -7,9 +7,9 @@ if __name__ == "__main__":
 import os, webapp2, logging, datetime
 from xml.dom.minidom import Text, Element, Document
 
-from models.ndb import SharkAttack, Country, Country, Area
+from models.native import SharkAttack, Country, Country, Area
 from utils import StringUtils
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository
+from repositories.data.repository_pickle import SharkAttackRepository, CountryRepository, AreaRepository
 
 class SiteMapUrl():
     def __init__(self, path, lastmod, changefreq, priority):

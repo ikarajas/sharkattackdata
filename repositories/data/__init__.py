@@ -1,3 +1,4 @@
+import logging
 import pickle
 
 from blobs import attacks
@@ -18,6 +19,7 @@ def process_attack_area(attack):
         country.areas_dict[attack.area_normalised] = Area(country, attack.area, attack.area_normalised)
     area = country.areas_dict[attack.area_normalised]
     attack.parent = area
+    area.attacks_dict[attack.id] = attack
     area.attacks.append(attack)
 
 def generate_place_summary(country):
@@ -25,17 +27,23 @@ def generate_place_summary(country):
     country.place_summary = ps
 
 def process():
+    logging.info("Generating DataStore")
     input_attacks_list = pickle.loads(attacks.data.decode("base64"))
-    DataStore.attacks_list = [SharkAttack(y) for y in input_attacks_list]
+    converted_to_models_list = [SharkAttack(y) for y in input_attacks_list]
+    #reverse the list to make sorting quicker
+    converted_to_models_list.reverse()
+    converted_to_models_list = sorted(converted_to_models_list, cmp=SharkAttack.compareByDate)
+    DataStore.attacks_list = converted_to_models_list
 
     for a in DataStore.attacks_list:
-        DataStore.attacks_dict[a.gsaf_case_number] = a
+        DataStore.attacks_dict[a.id] = a
         process_attack_country(a)
         process_attack_area(a)
 
     for c in DataStore.get_countries_list():
         generate_place_summary(c)
 
+    logging.info("Finished generating DataStore")
 
 process()
 

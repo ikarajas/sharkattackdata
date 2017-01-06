@@ -1,8 +1,9 @@
+import logging
 from basepage import *
-from models.ndb import Country, Area, SharkAttack
+from models.native import Country, Area, SharkAttack
 from repositories.general import SiteInformationRepository
 from repositories.data.common import *
-from repositories.data.repository_ndb import SharkAttackRepository
+from repositories.data.repository_pickle import SharkAttackRepository
 
 
 class MainPage(BasePage):
@@ -59,6 +60,7 @@ class AttackPage(BasePage):
         if isGsaf:
             path.append("gsaf")
         path.extend(["attack", attack.countryNormalised, attack.area_normalised, attack.gsaf_case_number])
+        logging.info(path)
         return "/".join(path)
 
     def handle(self, countryId, areaId, attackId):
@@ -92,10 +94,10 @@ class CountryPage(LocationPage):
         super(CountryPage, self).__init__(request, response)
 
     def onGet(self, countryNameKey):
-        self._country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
+        self._country = self._countryRepository.getCountry(self.helper.getNormalisedCountryName(countryNameKey))
         if self._country is None:
             return
-        self._areas = [y for y in Area.query(ancestor=self._country.key).fetch()]
+        self._areas = self._country.areas
 
     def handle(self, countryNameKey):
         self.onGet(countryNameKey)
@@ -135,11 +137,11 @@ class AreaPage(LocationPage):
         super(AreaPage, self).__init__(request, response)
 
     def handle(self, countryNameKey, areaNameKey):
-        country = Country.get_by_id(self.helper.getNormalisedCountryName(countryNameKey))
+        country = self._countryRepository.getCountry(self.helper.getNormalisedCountryName(countryNameKey))
         if country is None:
             raise PageNotFoundException()
 
-        area = country.getAreaForName(areaNameKey)
+        area = country.areas_dict[areaNameKey]
         if area is None:
             raise PageNotFoundException()
 

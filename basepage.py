@@ -6,7 +6,7 @@ from custom_exceptions import PageNotFoundException
 from constants import Constants
 from helper import Helper
 from repositories.general import SiteInformationRepository
-from repositories.data.repository_ndb import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
+from repositories.data.repository_pickle import SharkAttackRepository, CountryRepository, AreaRepository, DataHelper
 from siteinformation import SiteInformation
 from error_handlers import ErrorHandlers
 

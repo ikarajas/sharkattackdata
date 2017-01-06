@@ -1,6 +1,6 @@
 import os
 
-from repositories.data.repository_ndb import CountryRepository, DataHelper
+from repositories.data.repository_pickle import CountryRepository, DataHelper
 from utils import StringUtils
 
 class Helper():
