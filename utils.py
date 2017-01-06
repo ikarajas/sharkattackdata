@@ -1,4 +1,6 @@
-import re, unittest
+import re
+import unittest
+import unicodedata
 
 class MiscUtils:
     @staticmethod
@@ -11,10 +13,10 @@ class MiscUtils:
 class StringUtils:
     @staticmethod
     def normalisePlaceName(name):
-        return StringUtils.normaliseName(name, toLower=True, spacesToUnderscore=True)
+        return StringUtils.normaliseName(name, toLower=True, spacesToUnderscore=True, unicodeToAscii=True)
 
     @staticmethod
-    def normaliseName(name, toLower=False, spacesToUnderscore=False, spacesToDash=False, dashesToUnderscore=False):
+    def normaliseName(name, toLower=False, spacesToUnderscore=False, spacesToDash=False, dashesToUnderscore=False, unicodeToAscii=False):
         if spacesToUnderscore and spacesToDash:
             raise ValueError("Kwargs: spacesToUnderscore and spacesToDash cannot both be true.")
         name = name.strip()
@@ -28,9 +30,18 @@ class StringUtils:
             name = name.replace(" ", "_")
         if spacesToDash:
             name = name.replace(" ", "-")
+        if unicodeToAscii:
+            name = StringUtils.toAscii(name)
+
         alnumRe = re.compile(r"([^a-zA-Z0-9_\- ]+)")
         name = alnumRe.sub("", name)
         return name
+
+    @staticmethod
+    def toAscii(inStr):
+        if not isinstance(inStr, unicode):
+            return inStr
+        return unicodedata.normalize("NFKD", inStr).encode("ascii", "ignore")
 
 class StringUtilsTest(unittest.TestCase):
     def testToLowerIsOn(self):
@@ -68,6 +79,21 @@ class StringUtilsTest(unittest.TestCase):
 
     def testSpacesToDashFalse(self):
         self.assertEqual(StringUtils.normaliseName("i am a monkey"), "i am a monkey")
+
+    def testUnicodeToAscii(self):
+        initial = u"\u0107"
+        self.assertTrue(isinstance(initial, unicode))
+        decoded = StringUtils.normaliseName(u"\u0107", unicodeToAscii=True)
+        self.assertFalse(isinstance(decoded, unicode))
+        self.assertEqual(decoded, "c")
+
+    def testUnicodeToAsciiIsOff(self):
+        initial = u"\u0107"
+        self.assertTrue(isinstance(initial, unicode))
+        decoded = StringUtils.normaliseName(u"\u0107", unicodeToAscii=False)
+        self.assertTrue(isinstance(decoded, unicode))
+        # The alphanumeric regex will not match a unicode character, so it will be removed.
+        self.assertEqual(decoded, "")
 
 if __name__ == "__main__":
     unittest.main()
